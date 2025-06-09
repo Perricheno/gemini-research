@@ -7,25 +7,34 @@ import { FileText, Download } from 'lucide-react';
 interface ResearchReportProps {
   finalReport: string;
   onDownload: () => void;
+  theme?: 'light' | 'dark';
 }
 
-const ResearchReport: React.FC<ResearchReportProps> = ({ finalReport, onDownload }) => {
+const ResearchReport: React.FC<ResearchReportProps> = ({ finalReport, onDownload, theme = 'light' }) => {
+  const themeClasses = theme === 'dark' 
+    ? 'bg-gray-900 border-white text-white' 
+    : 'bg-white border-black text-black';
+
+  const buttonClasses = theme === 'dark'
+    ? 'border-white hover:bg-white hover:text-black'
+    : 'border-black hover:bg-black hover:text-white';
+
   return (
-    <Card className="border-2 border-foreground animate-fade-in">
+    <Card className={`border-2 animate-fade-in ${themeClasses}`}>
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
           <div className="flex items-center gap-3 text-xl font-light">
             <FileText className="h-5 w-5" />
-            Профессиональный исследовательский отчет
+            Professional Research Report
           </div>
           <Button 
             onClick={onDownload} 
             variant="outline" 
             size="sm"
-            className="border-foreground hover:bg-foreground hover:text-background transition-all duration-200"
+            className={`transition-all duration-200 ${buttonClasses}`}
           >
             <Download className="h-4 w-4 mr-2" />
-            Скачать отчет
+            Download Report
           </Button>
         </CardTitle>
       </CardHeader>

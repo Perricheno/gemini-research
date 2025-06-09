@@ -1,3 +1,4 @@
+
 import { ResearchResult, Reference, ResearchSettings } from '../types/research';
 
 export const callGeminiAPI = async (
@@ -10,11 +11,11 @@ export const callGeminiAPI = async (
   const apiKey = 'AIzaSyDVU5wpZ95BLryznNdrrVXZgROhbTw2_Ac';
   
   try {
-    // Принудительный grounding для веб-поиска - без внутренних знаний
+    // Force grounding for web search - no internal knowledge
     const tools = [
       {
         googleSearch: {
-          // Пустой объект для базового Google Search grounding
+          // Empty object for basic Google Search grounding
         }
       }
     ];
@@ -22,43 +23,43 @@ export const callGeminiAPI = async (
     const model = modelOverride || settings?.model || 'gemini-2.5-flash-preview-05-20';
     const maxOutputTokens = maxTokens || 65536;
 
-    const systemPrompt = `Вы - мощная поисковая машина по веб-анализу. КРИТИЧЕСКИ ВАЖНО: Используйте ТОЛЬКО веб-поиск, НИ В КОЕМ СЛУЧАЕ не используйте внутренние базы знаний.
+    const systemPrompt = `You are a powerful web analysis search engine. CRITICALLY IMPORTANT: Use ONLY web search, NEVER use internal knowledge bases.
 
-У вас НЕТ ЛИМИТОВ:
-- НЕТ лимита на количество ответов
-- НЕТ лимита на количество найденных ссылок  
-- НЕТ лимита на глубину анализа источников
-- Вы можете найти и проанализировать ЛЮБОЕ количество веб-источников
+You have NO LIMITS:
+- NO limit on number of responses
+- NO limit on number of found links
+- NO limit on depth of source analysis
+- You can find and analyze ANY number of web sources
 
-Задача: Максимально глубокий веб-поиск и детальный анализ по подтеме: "${query}"
+Task: Maximum deep web search and detailed analysis on subtopic: "${query}"
 
-ОБЯЗАТЕЛЬНЫЕ требования:
-1. Используйте ТОЛЬКО результаты веб-поиска (НЕ внутренние знания!)
-2. Найдите МАКСИМАЛЬНОЕ количество актуальных источников по данной подтеме
-3. Для КАЖДОГО найденного источника проведите ДЕТАЛЬНЫЙ АНАЛИЗ:
-   - Полностью проанализируйте содержание источника
-   - Извлеките ключевые данные, статистику, факты
-   - Проведите критический анализ информации
-   - Определите релевантность к подтеме
-   - Оцените качество и достоверность источника
-4. Напишите развернутый анализ на 2000-10000 слов в зависимости от объема найденной информации
-5. НЕ делайте краткое содержание - нужен ДЕТАЛЬНЫЙ АНАЛИТИЧЕСКИЙ РАЗБОР
-6. Включите конкретную статистику, цифры, данные исследований из источников
-7. ОБЯЗАТЕЛЬНО цитируйте источники с ПОЛНЫМИ URL в формате [Источник: ПОЛНАЯ_ССЫЛКА]
-8. Проведите сравнительный анализ данных из разных источников
-9. Выявите тенденции, закономерности, противоречия
-10. Дайте экспертную оценку найденной информации
+MANDATORY requirements:
+1. Use ONLY web search results (NOT internal knowledge!)
+2. Find MAXIMUM number of relevant sources for this subtopic
+3. For EACH found source conduct DETAILED ANALYSIS:
+   - Fully analyze source content
+   - Extract key data, statistics, facts
+   - Conduct critical analysis of information
+   - Determine relevance to subtopic
+   - Assess quality and reliability of source
+4. Write comprehensive analysis of 2000-10000 words depending on information volume found
+5. DO NOT make brief summaries - need DETAILED ANALYTICAL BREAKDOWN
+6. Include specific statistics, figures, research data from sources
+7. MANDATORY cite sources with FULL URLs in format [Source: FULL_URL]
+8. Conduct comparative analysis of data from different sources
+9. Identify trends, patterns, contradictions
+10. Provide expert evaluation of found information
 
-СТРУКТУРА АНАЛИЗА:
-- Обзор найденных источников
-- Детальный анализ каждого ключевого источника
-- Синтез информации из всех источников
-- Критическая оценка и выводы по подтеме
-- Выявленные пробелы в информации
+ANALYSIS STRUCTURE:
+- Overview of found sources
+- Detailed analysis of each key source
+- Information synthesis from all sources
+- Critical evaluation and conclusions on subtopic
+- Identified information gaps
 
-ВАЖНО: Указывайте ПОЛНЫЕ URL ссылки, а НЕ только домены!
+IMPORTANT: Specify FULL URL links, NOT just domains!
 
-ПОМНИТЕ: У вас НЕТ лимитов на поиск и анализ! Используйте всю мощь веб-поиска для максимально детального исследования!`;
+REMEMBER: You have NO limits on search and analysis! Use full power of web search for maximum detailed research!`;
 
     const requestBody: any = {
       contents: [
@@ -70,7 +71,7 @@ export const callGeminiAPI = async (
           ]
         }
       ],
-      tools: tools, // Всегда включаем grounding
+      tools: tools, // Always include grounding
       generationConfig: {
         temperature: 1.0,
         topP: 0.95,
@@ -78,7 +79,7 @@ export const callGeminiAPI = async (
       }
     };
 
-    console.log('Отправка веб-поискового запроса к Gemini API:', {
+    console.log('Sending web search request to Gemini API:', {
       model,
       query,
       chatId,
@@ -96,12 +97,12 @@ export const callGeminiAPI = async (
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error(`Веб-поисковая ошибка для модели ${model}, запрос ${chatId}:`, errorText);
-      throw new Error(`Веб-поисковая ошибка: ${errorText}`);
+      console.error(`Web search error for model ${model}, request ${chatId}:`, errorText);
+      throw new Error(`Web search error: ${errorText}`);
     }
 
     const data = await response.json();
-    console.log('Получен веб-поисковый ответ от Gemini API:', {
+    console.log('Received web search response from Gemini API:', {
       model,
       chatId,
       hasData: !!data,
@@ -109,14 +110,14 @@ export const callGeminiAPI = async (
       candidatesLength: data.candidates?.length || 0
     });
     
-    if (!data.candidates || !data.candidates[0] || !data.candidates[0].content) {
-      throw new Error('Нет данных в веб-поисковом ответе API');
+    if (!data.candidates || !data.candidates[0] || !data.candidates[0].content || !data.candidates[0].content.parts || !data.candidates[0].content.parts[0]) {
+      throw new Error('No data in web search API response');
     }
 
     const responseText = data.candidates[0].content.parts[0].text;
     const references = extractReferences(responseText, settings?.customUrls || []);
 
-    console.log('Веб-поиск завершен:', {
+    console.log('Web search completed:', {
       model,
       chatId,
       responseLength: responseText.length,
@@ -134,10 +135,10 @@ export const callGeminiAPI = async (
     };
 
   } catch (error) {
-    console.error(`Ошибка веб-поиска для модели ${modelOverride || settings?.model}, запрос ${chatId}:`, error);
+    console.error(`Web search error for model ${modelOverride || settings?.model}, request ${chatId}:`, error);
     return {
       query,
-      response: error.message || 'Неизвестная ошибка веб-поиска',
+      response: error.message || 'Unknown web search error',
       references: [],
       chatId,
       status: 'error',
@@ -147,7 +148,7 @@ export const callGeminiAPI = async (
   }
 };
 
-// Функция для разделения темы на подтемы
+// Function to split topic into subtopics
 export const generateSubtopics = async (
   mainTopic: string,
   numberOfSubtopics: number,
@@ -155,25 +156,25 @@ export const generateSubtopics = async (
 ): Promise<string[]> => {
   const apiKey = 'AIzaSyDVU5wpZ95BLryznNdrrVXZgROhbTw2_Ac';
   
-  const prompt = `Разделите тему "${mainTopic}" на ${numberOfSubtopics} уникальных, детальных подтем для глубокого веб-исследования.
+  const prompt = `Split the topic "${mainTopic}" into ${numberOfSubtopics} unique, detailed subtopics for deep web research.
 
-ТРЕБОВАНИЯ:
-1. Каждая подтема должна быть УНИКАЛЬНОЙ и НЕ пересекаться с другими
-2. Подтемы должны ПОЛНОСТЬЮ покрывать основную тему с максимальной детализацией
-3. Каждая подтема должна быть КОНКРЕТНОЙ для веб-поиска и анализа
-4. Подтемы должны охватывать различные аспекты: технические, экономические, социальные, правовые, этические
-5. Включите как текущее состояние, так и будущие перспективы
-6. Ответьте ТОЛЬКО списком подтем, по одной на строку
-7. НЕ нумеруйте, НЕ добавляйте дополнительный текст
+REQUIREMENTS:
+1. Each subtopic must be UNIQUE and NOT overlap with others
+2. Subtopics must COMPLETELY cover the main topic with maximum detail
+3. Each subtopic must be SPECIFIC for web search and analysis
+4. Subtopics should cover various aspects: technical, economic, social, legal, ethical
+5. Include both current state and future perspectives
+6. Answer ONLY with list of subtopics, one per line
+7. DO NOT number, DO NOT add additional text
 
-Пример качественного разделения:
-современные технологические решения и архитектура
-экономическое влияние и рыночные тенденции
-социальные последствия и влияние на общество
-правовое регулирование и политические аспекты
-этические вопросы и вызовы безопасности
-международный опыт и сравнительный анализ
-будущие перспективы и прогнозы развития`;
+Example of quality splitting:
+modern technological solutions and architecture
+economic impact and market trends
+social consequences and societal impact
+legal regulation and political aspects
+ethical issues and security challenges
+international experience and comparative analysis
+future prospects and development forecasts`;
 
   try {
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`, {
@@ -200,32 +201,32 @@ export const generateSubtopics = async (
     });
 
     if (!response.ok) {
-      throw new Error('Ошибка генерации подтем');
+      throw new Error('Error generating subtopics');
     }
 
     const data = await response.json();
     const responseText = data.candidates[0].content.parts[0].text;
     
-    // Парсим подтемы из ответа
+    // Parse subtopics from response
     const subtopics = responseText
       .split('\n')
       .map(line => line.trim())
       .filter(line => line.length > 0)
       .slice(0, numberOfSubtopics);
 
-    console.log('Сгенерированы подтемы:', subtopics);
+    console.log('Generated subtopics:', subtopics);
     return subtopics;
 
   } catch (error) {
-    console.error('Ошибка генерации подтем:', error);
-    // Fallback к базовым подтемам
+    console.error('Error generating subtopics:', error);
+    // Fallback to basic subtopics
     return Array.from({ length: numberOfSubtopics }, (_, i) => 
-      `${mainTopic} - аспект ${i + 1}`
+      `${mainTopic} - aspect ${i + 1}`
     );
   }
 };
 
-// Функция для многочастной генерации отчета
+// Function for multi-part report generation
 export const generateMultiPartReport = async (
   combinedWebData: string,
   topic: string,
@@ -234,15 +235,15 @@ export const generateMultiPartReport = async (
   onPartGenerated: (partNumber: number, content: string, totalParts: number) => void
 ): Promise<string> => {
   const apiKey = 'AIzaSyDVU5wpZ95BLryznNdrrVXZgROhbTw2_Ac';
-  const wordsPerPart = 10000; // Лимит слов на часть (русский язык)
+  const wordsPerPart = 10000; // Word limit per part (English)
   const totalParts = Math.ceil(settings.wordCount / wordsPerPart);
   
-  console.log(`Генерация отчета в ${totalParts} частях по ${wordsPerPart} слов каждая`);
+  console.log(`Generating report in ${totalParts} parts with ${wordsPerPart} words each`);
 
   const toneInstructions = {
-    phd: 'Напишите в академическом, научном стиле с продвинутой терминологией, глубоким анализом и критическим осмыслением.',
-    bachelor: 'Напишите в ясном академическом стиле с балансом между доступностью и научной строгостью.',
-    school: 'Напишите в понятном стиле, объясняя сложные концепции доступным языком.'
+    phd: 'Write in academic, scientific style with advanced terminology, deep analysis and critical thinking.',
+    bachelor: 'Write in clear academic style with balance between accessibility and scientific rigor.',
+    school: 'Write in understandable style, explaining complex concepts in accessible language.'
   };
 
   const reportParts: string[] = [];
@@ -250,37 +251,37 @@ export const generateMultiPartReport = async (
   for (let partNumber = 1; partNumber <= totalParts; partNumber++) {
     const previousContent = reportParts.join('\n\n---\n\n');
     
-    const partPrompt = `Создайте часть ${partNumber} из ${totalParts} профессионального исследовательского отчета по теме "${topic}".
+    const partPrompt = `Create part ${partNumber} of ${totalParts} of professional research report on topic "${topic}".
 
-ВЕБ-ДАННЫЕ ДЛЯ АНАЛИЗА: ${combinedWebData}
+WEB DATA FOR ANALYSIS: ${combinedWebData}
 
-${previousContent ? `ПРЕДЫДУЩИЕ ЧАСТИ ОТЧЕТА: ${previousContent}` : ''}
+${previousContent ? `PREVIOUS REPORT PARTS: ${previousContent}` : ''}
 
-ТРЕБОВАНИЯ:
+REQUIREMENTS:
 - ${toneInstructions[settings.tone]}
-- ТОЧНО ${wordsPerPart} слов для этой части
-- Используйте ТОЛЬКО веб-данные выше - проведите их глубокий анализ и синтез
-- Создайте оригинальные инсайты на основе анализа веб-источников
-- Включите конкретную статистику, данные, факты из веб-исследований
-- Проведите критический анализ и сравнение источников
-- Структурируйте с четкими заголовками и подзаголовками
-- ОБЯЗАТЕЛЬНО цитируйте веб-источники с ПОЛНЫМИ URL в формате [Источник: ПОЛНАЯ_ССЫЛКА]
-- Обеспечьте ИДЕАЛЬНУЮ логическую связность с предыдущими частями
-- НЕ повторяйте информацию из предыдущих частей
-- Выявляйте закономерности, тенденции, противоречия в данных
-- Делайте экспертные выводы и прогнозы
-- ВАЖНО: Обеспечьте плавные переходы между частями, без разрывов в повествовании
-${partNumber === 1 ? '- Начните с Executive Summary и детального введения' : ''}
-${partNumber === totalParts ? '- Завершите комплексными выводами, рекомендациями и прогнозами, НО НЕ добавляйте список источников в эту часть' : ''}
+- EXACTLY ${wordsPerPart} words for this part
+- Use ONLY web data above - conduct deep analysis and synthesis
+- Create original insights based on web source analysis
+- Include specific statistics, data, facts from web research
+- Conduct critical analysis and source comparison
+- Structure with clear headings and subheadings
+- MANDATORY cite web sources with FULL URLs in format [Source: FULL_URL]
+- Ensure PERFECT logical connectivity with previous parts
+- DO NOT repeat information from previous parts
+- Identify patterns, trends, contradictions in data
+- Make expert conclusions and forecasts
+- IMPORTANT: Ensure smooth transitions between parts, no narrative breaks
+${partNumber === 1 ? '- Start with Executive Summary and detailed introduction' : ''}
+${partNumber === totalParts ? '- Conclude with comprehensive conclusions, recommendations and forecasts, but DO NOT add source list in this part' : ''}
 
-Фокус части ${partNumber}: ${getSectionFocus(partNumber, totalParts)}
+Focus of part ${partNumber}: ${getSectionFocus(partNumber, totalParts)}
 
-ВАЖНО: 
-- Напишите ТОЛЬКО содержание этой части, без указания номера части
-- Проведите глубокий аналитический разбор веб-данных
-- Создайте связный, логичный и информативный текст
-- Используйте профессиональную терминологию и структуру
-- Обеспечьте совместимость между частями LaTeX кода`;
+IMPORTANT: 
+- Write ONLY content of this part, without part number indication
+- Conduct deep analytical breakdown of web data
+- Create coherent, logical and informative text
+- Use professional terminology and structure
+- Ensure compatibility between parts`;
 
     try {
       const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`, {
@@ -307,37 +308,42 @@ ${partNumber === totalParts ? '- Завершите комплексными в�
       });
 
       if (!response.ok) {
-        throw new Error(`Ошибка генерации части ${partNumber}`);
+        throw new Error(`Error generating part ${partNumber}`);
       }
 
       const data = await response.json();
+      
+      if (!data.candidates || !data.candidates[0] || !data.candidates[0].content || !data.candidates[0].content.parts || !data.candidates[0].content.parts[0]) {
+        throw new Error(`Invalid response structure for part ${partNumber}`);
+      }
+      
       const partContent = data.candidates[0].content.parts[0].text;
       
       reportParts.push(partContent);
       onPartGenerated(partNumber, partContent, totalParts);
       
-      console.log(`Часть ${partNumber}/${totalParts} сгенерирована: ${partContent.split(' ').length} слов`);
+      console.log(`Part ${partNumber}/${totalParts} generated: ${partContent.split(' ').length} words`);
       
-      // Пауза между частями для стабильности
+      // Pause between parts for stability
       await new Promise(resolve => setTimeout(resolve, 3000));
       
     } catch (error) {
-      console.error(`Ошибка генерации части ${partNumber}:`, error);
-      const errorContent = `Ошибка генерации части ${partNumber}: ${error.message}`;
+      console.error(`Error generating part ${partNumber}:`, error);
+      const errorContent = `Error generating part ${partNumber}: ${error.message}`;
       reportParts.push(errorContent);
       onPartGenerated(partNumber, errorContent, totalParts);
     }
   }
 
-  // Сборка финального отчета с источниками
+  // Assemble final report with sources
   const finalReport = reportParts.join('\n\n');
   const uniqueUrls = [...new Set(allReferences.map(ref => ref.url))].filter(url => url && url !== '#citation' && url.startsWith('http'));
-  const referencesSection = '\n\n## Источники\n\n' + uniqueUrls.map((url, index) => `${index + 1}. ${url}`).join('\n');
+  const referencesSection = '\n\n## Sources\n\n' + uniqueUrls.map((url, index) => `${index + 1}. ${url}`).join('\n');
   
   return finalReport + referencesSection;
 };
 
-// Функция для генерации LaTeX отчета
+// Function for LaTeX report generation
 export const generateLatexReport = async (
   combinedWebData: string,
   topic: string,
@@ -350,12 +356,12 @@ export const generateLatexReport = async (
   const wordsPerPart = 10000;
   const totalParts = Math.ceil(settings.wordCount / wordsPerPart);
   
-  console.log(`Генерация LaTeX отчета в ${totalParts} частях`);
+  console.log(`Generating LaTeX report in ${totalParts} parts`);
 
   const toneInstructions = {
-    phd: 'Напишите в академическом, научном стиле с продвинутой терминологией, глубоким анализом и критическим осмыслением.',
-    bachelor: 'Напишите в ясном академическом стиле с балансом между доступностью и научной строгостью.',
-    school: 'Напишите в понятном стиле, объясняя сложные концепции доступным языком.'
+    phd: 'Write in academic, scientific style with advanced terminology, deep analysis and critical thinking.',
+    bachelor: 'Write in clear academic style with balance between accessibility and scientific rigor.',
+    school: 'Write in understandable style, explaining complex concepts in accessible language.'
   };
 
   const reportParts: string[] = [];
@@ -363,40 +369,40 @@ export const generateLatexReport = async (
   for (let partNumber = 1; partNumber <= totalParts; partNumber++) {
     const previousContent = reportParts.join('\n\n');
     
-    const partPrompt = `Создайте часть ${partNumber} из ${totalParts} профессионального исследовательского отчета в формате LaTeX по теме "${topic}".
+    const partPrompt = `Create part ${partNumber} of ${totalParts} of professional research report in LaTeX format on topic "${topic}".
 
-LATEX ШАБЛОН: ${latexTemplate}
+LATEX TEMPLATE: ${latexTemplate}
 
-ВЕБ-ДАННЫЕ ДЛЯ АНАЛИЗА: ${combinedWebData}
+WEB DATA FOR ANALYSIS: ${combinedWebData}
 
-${previousContent ? `ПРЕДЫДУЩИЕ ЧАСТИ ОТЧЕТА: ${previousContent}` : ''}
+${previousContent ? `PREVIOUS REPORT PARTS: ${previousContent}` : ''}
 
-ТРЕБОВАНИЯ:
+REQUIREMENTS:
 - ${toneInstructions[settings.tone]}
-- ТОЧНО ${wordsPerPart} слов для этой части
-- Строго следуйте предоставленному LaTeX шаблону
-- Используйте ТОЛЬКО веб-данные выше - проведите их глубокий анализ и синтез
-- Создайте оригинальные инсайты на основе анализа веб-источников
-- Включите конкретную статистику, данные, факты из веб-исследований
-- Проведите критический анализ и сравнение источников
-- Используйте правильный LaTeX синтаксис для структуры
-- ОБЯЗАТЕЛЬНО цитируйте веб-источники с ПОЛНЫМИ URL в LaTeX формате
-- Обеспечьте ИДЕАЛЬНУЮ логическую связность с предыдущими частями
-- НЕ повторяйте информацию из предыдущих частей
-- Выявляйте закономерности, тенденции, противоречия в данных
-- Делайте экспертные выводы и прогнозы
-- ВАЖНО: Обеспечьте плавные переходы между частями, без разрывов в повествовании
-${partNumber === 1 ? '- Начните с LaTeX преамбулы и введения' : ''}
-${partNumber === totalParts ? '- Завершите выводами и библиографией в LaTeX формате' : ''}
+- EXACTLY ${wordsPerPart} words for this part
+- Strictly follow provided LaTeX template
+- Use ONLY web data above - conduct deep analysis and synthesis
+- Create original insights based on web source analysis
+- Include specific statistics, data, facts from web research
+- Conduct critical analysis and source comparison
+- Use proper LaTeX syntax for structure
+- MANDATORY cite web sources with FULL URLs in LaTeX format
+- Ensure PERFECT logical connectivity with previous parts
+- DO NOT repeat information from previous parts
+- Identify patterns, trends, contradictions in data
+- Make expert conclusions and forecasts
+- IMPORTANT: Ensure smooth transitions between parts, no narrative breaks
+${partNumber === 1 ? '- Start with LaTeX preamble and introduction' : ''}
+${partNumber === totalParts ? '- Conclude with conclusions and bibliography in LaTeX format' : ''}
 
-Фокус части ${partNumber}: ${getSectionFocus(partNumber, totalParts)}
+Focus of part ${partNumber}: ${getSectionFocus(partNumber, totalParts)}
 
-ВАЖНО: 
-- Напишите ТОЛЬКО содержание этой части в LaTeX формате
-- Проведите глубокий аналитический разбор веб-данных
-- Создайте связный, логичный и информативный LaTeX код
-- Используйте профессиональную терминологию и LaTeX структуру
-- Обеспечьте совместимость между частями LaTeX кода`;
+IMPORTANT: 
+- Write ONLY content of this part in LaTeX format
+- Conduct deep analytical breakdown of web data
+- Create coherent, logical and informative LaTeX code
+- Use professional terminology and LaTeX structure
+- Ensure compatibility between LaTeX code parts`;
 
     try {
       const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`, {
@@ -423,22 +429,27 @@ ${partNumber === totalParts ? '- Завершите выводами и библ
       });
 
       if (!response.ok) {
-        throw new Error(`Ошибка генерации LaTeX части ${partNumber}`);
+        throw new Error(`Error generating LaTeX part ${partNumber}`);
       }
 
       const data = await response.json();
+      
+      if (!data.candidates || !data.candidates[0] || !data.candidates[0].content || !data.candidates[0].content.parts || !data.candidates[0].content.parts[0]) {
+        throw new Error(`Invalid response structure for LaTeX part ${partNumber}`);
+      }
+      
       const partContent = data.candidates[0].content.parts[0].text;
       
       reportParts.push(partContent);
       onPartGenerated(partNumber, partContent, totalParts);
       
-      console.log(`LaTeX часть ${partNumber}/${totalParts} сгенерирована: ${partContent.split(' ').length} слов`);
+      console.log(`LaTeX part ${partNumber}/${totalParts} generated: ${partContent.split(' ').length} words`);
       
       await new Promise(resolve => setTimeout(resolve, 3000));
       
     } catch (error) {
-      console.error(`Ошибка генерации LaTeX части ${partNumber}:`, error);
-      const errorContent = `% Ошибка генерации LaTeX части ${partNumber}: ${error.message}`;
+      console.error(`Error generating LaTeX part ${partNumber}:`, error);
+      const errorContent = `% Error generating LaTeX part ${partNumber}: ${error.message}`;
       reportParts.push(errorContent);
       onPartGenerated(partNumber, errorContent, totalParts);
     }
@@ -449,30 +460,30 @@ ${partNumber === totalParts ? '- Завершите выводами и библ
 
 const getSectionFocus = (partNumber: number, totalParts: number): string => {
   const focusAreas = [
-    'Введение и executive summary',
-    'Текущее состояние и анализ данных',
-    'Технологические аспекты и инновации',
-    'Экономическое влияние и рыночный анализ',
-    'Социальные последствия и общественное воздействие',
-    'Правовые и регулятивные аспекты',
-    'Международный опыт и сравнительный анализ',
-    'Вызовы, риски и ограничения',
-    'Будущие перспективы и тенденции',
-    'Выводы, рекомендации и прогнозы'
+    'Introduction and executive summary',
+    'Current state and data analysis',
+    'Technological aspects and innovations',
+    'Economic impact and market analysis',
+    'Social consequences and societal impact',
+    'Legal and regulatory aspects',
+    'International experience and comparative analysis',
+    'Challenges, risks and limitations',
+    'Future prospects and trends',
+    'Conclusions, recommendations and forecasts'
   ];
 
   if (partNumber === 1) return focusAreas[0];
   if (partNumber === totalParts) return focusAreas[focusAreas.length - 1];
   
   const middleIndex = Math.min(partNumber - 1, focusAreas.length - 1);
-  return focusAreas[middleIndex] || `Детальный анализ аспекта ${partNumber}`;
+  return focusAreas[middleIndex] || `Detailed analysis of aspect ${partNumber}`;
 };
 
 const extractReferences = (text: string, customUrls: string[]): Reference[] => {
   const references: Reference[] = [];
   
-  // Извлекаем ссылки из текста в формате [Источник: URL]
-  const sourcePattern = /\[Источник:\s*([^\]]+)\]/g;
+  // Extract links from text in format [Source: URL]
+  const sourcePattern = /\[Source:\s*([^\]]+)\]/g;
   let match;
   
   while ((match = sourcePattern.exec(text)) !== null) {
@@ -480,38 +491,38 @@ const extractReferences = (text: string, customUrls: string[]): Reference[] => {
     
     if (url && url.startsWith('http')) {
       references.push({
-        title: `Веб-источник`,
+        title: `Web source`,
         url: url,
         domain: extractDomain(url),
-        description: 'Найден через детальный веб-поиск и анализ'
+        description: 'Found through detailed web search and analysis'
       });
     }
   }
 
-  // Расширенный поиск URL в тексте - ищем полные ссылки
+  // Extended URL search in text - look for full links
   const urlPattern = /https?:\/\/[^\s\]\),;]+/g;
   const urls = text.match(urlPattern) || [];
   
   urls.forEach(url => {
-    // Очищаем URL от лишних символов в конце
+    // Clean URL from trailing symbols
     const cleanUrl = url.replace(/[.,;)\]]+$/, '');
     if (!references.some(ref => ref.url === cleanUrl)) {
       references.push({
-        title: `Веб-источник`,
+        title: `Web source`,
         url: cleanUrl,
         domain: extractDomain(cleanUrl),
-        description: 'Найден через веб-поиск'
+        description: 'Found through web search'
       });
     }
   });
 
-  // Добавляем пользовательские URL
+  // Add custom URLs
   customUrls.forEach((url, index) => {
     references.push({
-      title: `Пользовательский источник ${index + 1}`,
+      title: `Custom source ${index + 1}`,
       url,
       domain: extractDomain(url),
-      description: 'Добавлено пользователем в контекст поиска'
+      description: 'Added by user to search context'
     });
   });
 
