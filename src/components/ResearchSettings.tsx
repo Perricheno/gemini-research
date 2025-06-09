@@ -83,20 +83,21 @@ const ResearchSettings: React.FC<ResearchSettingsProps> = ({
       <CardHeader>
         <CardTitle className="flex items-center gap-3 text-xl font-light">
           <Settings className="h-5 w-5" />
-          Настройки веб-исследования
+          СУПЕР МАШИНА настройки
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="space-y-2">
-          <Label htmlFor="topic" className="text-sm font-medium">Тема веб-исследования</Label>
+          <Label htmlFor="topic" className="text-sm font-medium">Тема для СУПЕР исследования</Label>
           <Textarea
             id="topic"
             value={topic}
             onChange={(e) => setTopic(e.target.value)}
-            placeholder="Введите тему для глубокого веб-исследования..."
+            placeholder="Введите тему для автоматического разделения и глубокого анализа..."
             rows={3}
             className="border-muted focus:border-foreground transition-colors duration-200"
           />
+          <p className="text-xs text-muted-foreground">Gemini 2.5 Flash Preview автоматически разделит тему на подтемы</p>
         </div>
 
         <div className="space-y-2">
@@ -114,13 +115,13 @@ const ResearchSettings: React.FC<ResearchSettingsProps> = ({
         </div>
 
         <div className="space-y-2">
-          <Label className="text-sm font-medium">Основная AI модель</Label>
+          <Label className="text-sm font-medium">СУПЕР модель</Label>
           <Select value={settings.model} onValueChange={(value) => setSettings({...settings, model: value})}>
             <SelectTrigger className="border-muted focus:border-foreground">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="gemini-2.5-flash-preview-05-20">Gemini 2.5 Flash Preview (Веб-поиск)</SelectItem>
+              <SelectItem value="gemini-2.5-flash-preview-05-20">Gemini 2.5 Flash Preview (СУПЕР веб-поиск)</SelectItem>
               <SelectItem value="gemini-2.0-flash">Gemini 2.0 Flash (Веб-поиск)</SelectItem>
               <SelectItem value="gemini-2.0-flash-exp">Gemini 2.0 Flash Exp (Веб-поиск)</SelectItem>
               <SelectItem value="gemini-1.5-pro">Gemini 1.5 Pro (Веб-поиск)</SelectItem>
@@ -129,7 +130,7 @@ const ResearchSettings: React.FC<ResearchSettingsProps> = ({
         </div>
 
         <div className="space-y-2">
-          <Label className="text-sm font-medium">Интенсивность веб-поиска</Label>
+          <Label className="text-sm font-medium">Глубина веб-анализа</Label>
           <Select value={settings.searchDepth} onValueChange={(value: any) => setSettings({...settings, searchDepth: value})}>
             <SelectTrigger className="border-muted focus:border-foreground">
               <SelectValue />
@@ -137,7 +138,7 @@ const ResearchSettings: React.FC<ResearchSettingsProps> = ({
             <SelectContent>
               <SelectItem value="shallow">Поверхностный (Быстро)</SelectItem>
               <SelectItem value="medium">Средний (Сбалансированно)</SelectItem>
-              <SelectItem value="deep">Глубокий (Всесторонне)</SelectItem>
+              <SelectItem value="deep">СУПЕР глубокий (Максимум)</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -145,7 +146,7 @@ const ResearchSettings: React.FC<ResearchSettingsProps> = ({
         <div className="flex items-center justify-between">
           <div className="space-y-1">
             <Label className="text-sm font-medium">Принудительный веб-поиск</Label>
-            <p className="text-xs text-muted-foreground">Всегда включен - не использует внутренние базы знаний</p>
+            <p className="text-xs text-muted-foreground">СУПЕР МАШИНА: НЕТ лимитов на веб-поиск!</p>
           </div>
           <Switch
             checked={true}
@@ -155,11 +156,11 @@ const ResearchSettings: React.FC<ResearchSettingsProps> = ({
         </div>
 
         <div className="space-y-2">
-          <Label className="text-sm font-medium">Количество слов: {settings.wordCount.toLocaleString()}</Label>
-          <p className="text-xs text-muted-foreground">Распределяется между 5 моделями Gemini 2.5 Flash Preview</p>
+          <Label className="text-sm font-medium">Слов в отчете: {settings.wordCount.toLocaleString()}</Label>
+          <p className="text-xs text-muted-foreground">Многочастная генерация по 10,000 слов на часть</p>
           <input
             type="range"
-            min="5000"
+            min="10000"
             max="100000"
             step="5000"
             value={settings.wordCount}
@@ -169,13 +170,13 @@ const ResearchSettings: React.FC<ResearchSettingsProps> = ({
         </div>
 
         <div className="space-y-2">
-          <Label className="text-sm font-medium">Параллельные веб-запросы: {settings.parallelQueries}</Label>
-          <p className="text-xs text-muted-foreground">Максимальные лимиты для глубокого веб-поиска</p>
+          <Label className="text-sm font-medium">Автоматических подтем: {settings.parallelQueries}</Label>
+          <p className="text-xs text-muted-foreground">Gemini 2.5 Flash Preview разделит тему на уникальные подтемы</p>
           <input
             type="range"
             min="10"
-            max="500"
-            step="10"
+            max="100"
+            step="5"
             value={settings.parallelQueries}
             onChange={(e) => setSettings({...settings, parallelQueries: parseInt(e.target.value)})}
             className="w-full h-1 bg-muted rounded-lg appearance-none cursor-pointer slider"
@@ -268,12 +269,12 @@ const ResearchSettings: React.FC<ResearchSettingsProps> = ({
           {isResearching ? (
             <>
               <Globe className="mr-2 h-5 w-5 animate-spin" />
-              Веб-исследование...
+              СУПЕР МАШИНА работает...
             </>
           ) : (
             <>
               <Globe className="mr-2 h-5 w-5" />
-              Начать веб-исследование
+              Запустить СУПЕР МАШИНУ
             </>
           )}
         </Button>
