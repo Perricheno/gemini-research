@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Search, Brain, FileText, Download, Settings } from 'lucide-react';
+import { Search, Brain, FileText, Download, Settings, Eye, EyeOff } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface ResearchResult {
@@ -17,6 +17,7 @@ interface ResearchResult {
   response: string;
   references: string[];
   chatId: number;
+  status: 'pending' | 'completed' | 'error';
 }
 
 interface ResearchSettings {
@@ -27,7 +28,7 @@ interface ResearchSettings {
 
 const DeepResearchApp = () => {
   const [topic, setTopic] = useState('');
-  const [apiKey, setApiKey] = useState('AIzaSyDVU5wpZ95BLryznNdrrVXZgROhbTw2_Ac');
+  const apiKey = 'AIzaSyDVU5wpZ95BLryznNdrrVXZgROhbTw2_Ac'; // Embedded API key
   const [settings, setSettings] = useState<ResearchSettings>({
     tone: 'phd',
     wordCount: 5000,
@@ -40,6 +41,8 @@ const DeepResearchApp = () => {
   const [results, setResults] = useState<ResearchResult[]>([]);
   const [finalReport, setFinalReport] = useState('');
   const [totalReferences, setTotalReferences] = useState(0);
+  const [showQueries, setShowQueries] = useState(false);
+  const [completedQueries, setCompletedQueries] = useState(0);
 
   const generateResearchQueries = (topic: string, count: number): string[] => {
     const baseQueries = [
@@ -80,7 +83,7 @@ const DeepResearchApp = () => {
           `${topic} cross-cultural perspectives`,
           `${topic} interdisciplinary approaches`
         ];
-        extendedQueries.push(variations[i % variations.length] + ` ${Math.floor(i / variations.length)}`);
+        extendedQueries.push(variations[i % variations.length] + ` ${Math.floor(i / variations.length) + 1}`);
       }
     }
     
@@ -88,50 +91,67 @@ const DeepResearchApp = () => {
   };
 
   const callGeminiAPI = async (query: string, chatId: number): Promise<ResearchResult> => {
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${apiKey}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        contents: [{
-          parts: [{
-            text: `Conduct detailed research on: "${query}". Provide comprehensive information with specific data, statistics, and examples. Include references and sources where possible. Focus on recent and credible information.`
-          }]
-        }],
-        generationConfig: {
-          temperature: 0.7,
-          topK: 40,
-          topP: 0.9,
-          maxOutputTokens: 2048,
+    console.log(`Starting query ${chatId}: ${query}`);
+    
+    try {
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${apiKey}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
         },
-        tools: [{
-          googleSearchRetrieval: {
-            dynamicRetrievalConfig: {
-              mode: "MODE_DYNAMIC",
-              dynamicThreshold: 0.7
+        body: JSON.stringify({
+          contents: [{
+            parts: [{
+              text: `Conduct detailed research on: "${query}". Provide comprehensive information with specific data, statistics, and examples. Include references and sources where possible. Focus on recent and credible information.`
+            }]
+          }],
+          generationConfig: {
+            temperature: 0.7,
+            topK: 40,
+            topP: 0.9,
+            maxOutputTokens: 2048,
+          },
+          tools: [{
+            googleSearchRetrieval: {
+              dynamicRetrievalConfig: {
+                mode: "MODE_DYNAMIC",
+                dynamicThreshold: 0.7
+              }
             }
-          }
-        }]
-      }),
-    });
+          }]
+        }),
+      });
 
-    if (!response.ok) {
-      throw new Error(`API call failed for query: ${query}`);
+      if (!response.ok) {
+        console.error(`API call failed for query ${chatId}: ${response.status}`);
+        throw new Error(`API call failed for query: ${query}`);
+      }
+
+      const data = await response.json();
+      const content = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+      
+      // Extract references from the response
+      const references = extractReferences(content);
+      
+      console.log(`Completed query ${chatId}: Found ${references.length} references`);
+      
+      return {
+        query,
+        response: content,
+        references,
+        chatId,
+        status: 'completed'
+      };
+    } catch (error) {
+      console.error(`Error in query ${chatId}:`, error);
+      return {
+        query,
+        response: `Error: ${error.message}`,
+        references: [],
+        chatId,
+        status: 'error'
+      };
     }
-
-    const data = await response.json();
-    const content = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-    
-    // Extract references from the response
-    const references = extractReferences(content);
-    
-    return {
-      query,
-      response: content,
-      references,
-      chatId
-    };
   };
 
   const extractReferences = (text: string): string[] => {
@@ -163,28 +183,37 @@ const DeepResearchApp = () => {
       return;
     }
 
-    if (!apiKey.trim()) {
-      toast.error('Please enter your Gemini API key');
-      return;
-    }
-
     setIsResearching(true);
     setProgress(0);
     setResults([]);
     setFinalReport('');
     setTotalReferences(0);
+    setCompletedQueries(0);
 
     try {
       setCurrentStep('Generating research queries...');
       const queries = generateResearchQueries(topic, settings.parallelQueries);
       
+      // Initialize results with pending status
+      const initialResults: ResearchResult[] = queries.map((query, index) => ({
+        query,
+        response: '',
+        references: [],
+        chatId: index + 1,
+        status: 'pending'
+      }));
+      setResults(initialResults);
+      
       setCurrentStep(`Executing ${queries.length} parallel research queries...`);
+      toast.success(`Started ${queries.length} parallel research queries`);
       
       const batchSize = 5; // Process in batches to avoid rate limits
       const allResults: ResearchResult[] = [];
       
       for (let i = 0; i < queries.length; i += batchSize) {
         const batch = queries.slice(i, i + batchSize);
+        console.log(`Processing batch ${Math.floor(i / batchSize) + 1}/${Math.ceil(queries.length / batchSize)}`);
+        
         const batchPromises = batch.map((query, index) => 
           callGeminiAPI(query, i + index + 1)
         );
@@ -195,16 +224,34 @@ const DeepResearchApp = () => {
           batchResults.forEach((result, index) => {
             if (result.status === 'fulfilled') {
               allResults.push(result.value);
+              setCompletedQueries(prev => prev + 1);
+              
+              // Update specific result in the array
+              setResults(prev => prev.map(r => 
+                r.chatId === result.value.chatId ? result.value : r
+              ));
             } else {
               console.error(`Query failed: ${batch[index]}`, result.reason);
+              const errorResult: ResearchResult = {
+                query: batch[index],
+                response: `Error: ${result.reason}`,
+                references: [],
+                chatId: i + index + 1,
+                status: 'error'
+              };
+              allResults.push(errorResult);
+              setCompletedQueries(prev => prev + 1);
+              
+              setResults(prev => prev.map(r => 
+                r.chatId === errorResult.chatId ? errorResult : r
+              ));
             }
           });
           
           setProgress(((i + batchSize) / queries.length) * 70);
-          setResults([...allResults]);
           
           // Small delay between batches
-          await new Promise(resolve => setTimeout(resolve, 1000));
+          await new Promise(resolve => setTimeout(resolve, 2000));
         } catch (error) {
           console.error('Batch error:', error);
         }
@@ -213,6 +260,8 @@ const DeepResearchApp = () => {
       const totalRefs = allResults.reduce((sum, result) => sum + result.references.length, 0);
       setTotalReferences(totalRefs);
       
+      toast.success(`Completed ${allResults.length} queries with ${totalRefs} references found`);
+      
       setCurrentStep('Analyzing and synthesizing research data...');
       setProgress(75);
       
@@ -220,7 +269,7 @@ const DeepResearchApp = () => {
       
     } catch (error) {
       console.error('Research error:', error);
-      toast.error('Research failed. Please check your API key and try again.');
+      toast.error('Research failed. Please try again.');
     } finally {
       setIsResearching(false);
       setProgress(100);
@@ -229,8 +278,9 @@ const DeepResearchApp = () => {
   };
 
   const generateFinalReport = async (results: ResearchResult[]) => {
-    const combinedData = results.map(r => r.response).join('\n\n');
-    const allReferences = results.flatMap(r => r.references);
+    const successfulResults = results.filter(r => r.status === 'completed');
+    const combinedData = successfulResults.map(r => r.response).join('\n\n');
+    const allReferences = successfulResults.flatMap(r => r.references);
     
     const toneInstructions = {
       phd: 'Write in an academic, scholarly tone suitable for PhD-level research. Use sophisticated vocabulary, complex sentence structures, and rigorous analytical approach.',
@@ -249,7 +299,7 @@ const DeepResearchApp = () => {
       const sectionPrompt = `
         Based on the research data provided, write section ${i + 1} of ${chunks} of a comprehensive research report on "${topic}".
         
-        Research data: ${combinedData.substring(i * 2000, (i + 1) * 2000)}
+        Research data: ${combinedData.substring(i * 3000, (i + 1) * 3000)}
         
         Requirements:
         - ${toneInstructions[settings.tone]}
@@ -279,6 +329,7 @@ const DeepResearchApp = () => {
     });
     
     setFinalReport(fullReport);
+    toast.success('Research report generated successfully!');
   };
 
   const downloadReport = () => {
@@ -289,6 +340,7 @@ const DeepResearchApp = () => {
     a.download = `research-report-${topic.replace(/\s+/g, '-')}.txt`;
     a.click();
     URL.revokeObjectURL(url);
+    toast.success('Report downloaded successfully!');
   };
 
   return (
@@ -312,17 +364,6 @@ const DeepResearchApp = () => {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div>
-                <Label htmlFor="apiKey">Gemini API Key</Label>
-                <Input
-                  id="apiKey"
-                  type="password"
-                  value={apiKey}
-                  onChange={(e) => setApiKey(e.target.value)}
-                  placeholder="Enter your Gemini API key"
-                />
-              </div>
-
               <div>
                 <Label htmlFor="topic">Research Topic</Label>
                 <Textarea
@@ -405,7 +446,7 @@ const DeepResearchApp = () => {
                   <Progress value={progress} className="w-full" />
                   <p className="text-sm text-muted-foreground">{currentStep}</p>
                   <div className="flex gap-2 flex-wrap">
-                    <Badge variant="outline">{results.length} queries completed</Badge>
+                    <Badge variant="outline">{completedQueries}/{settings.parallelQueries} queries completed</Badge>
                     <Badge variant="outline">{totalReferences} references found</Badge>
                   </div>
                 </div>
@@ -418,29 +459,45 @@ const DeepResearchApp = () => {
           {results.length > 0 && (
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Search className="h-5 w-5" />
-                  Research Results ({results.length})
+                <CardTitle className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Search className="h-5 w-5" />
+                    Parallel Queries ({results.length})
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowQueries(!showQueries)}
+                  >
+                    {showQueries ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </Button>
                 </CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="max-h-96 overflow-y-auto space-y-4">
-                  {results.map((result, index) => (
-                    <div key={index} className="border rounded-lg p-4">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Badge>Query {result.chatId}</Badge>
-                        <span className="text-sm font-medium">{result.query}</span>
+              {showQueries && (
+                <CardContent>
+                  <div className="max-h-96 overflow-y-auto space-y-2">
+                    {results.map((result, index) => (
+                      <div key={index} className="border rounded-lg p-3">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Badge variant={result.status === 'completed' ? 'default' : result.status === 'error' ? 'destructive' : 'secondary'}>
+                            Query {result.chatId}
+                          </Badge>
+                          <span className="text-sm font-medium">{result.query}</span>
+                        </div>
+                        {result.response && (
+                          <p className="text-sm text-muted-foreground mb-2">
+                            {result.response.substring(0, 150)}...
+                          </p>
+                        )}
+                        <div className="flex items-center gap-2">
+                          <Badge variant="secondary">{result.references.length} references</Badge>
+                          <Badge variant="outline">{result.status}</Badge>
+                        </div>
                       </div>
-                      <p className="text-sm text-muted-foreground mb-2">
-                        {result.response.substring(0, 200)}...
-                      </p>
-                      <div className="flex items-center gap-2">
-                        <Badge variant="secondary">{result.references.length} references</Badge>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
+                    ))}
+                  </div>
+                </CardContent>
+              )}
             </Card>
           )}
 
