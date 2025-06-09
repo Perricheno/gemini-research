@@ -6,6 +6,7 @@ export interface ResearchResult {
   chatId: number;
   status: 'pending' | 'completed' | 'error';
   timestamp: Date;
+  model?: string;
 }
 
 export interface Reference {
@@ -32,8 +33,17 @@ export interface ResearchSettings {
 
 export interface ChatMessage {
   id: string;
-  type: 'user' | 'system' | 'research';
+  type: 'user' | 'system' | 'research' | 'model-response';
   content: string;
   timestamp: Date;
   metadata?: any;
+}
+
+export interface ModelReport {
+  id: string;
+  model: string;
+  content: string;
+  status: 'pending' | 'completed' | 'error';
+  timestamp: Date;
+  wordCount: number;
 }

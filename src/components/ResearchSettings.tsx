@@ -83,17 +83,17 @@ const ResearchSettings: React.FC<ResearchSettingsProps> = ({
       <CardHeader>
         <CardTitle className="flex items-center gap-3 text-xl font-light">
           <Settings className="h-5 w-5" />
-          Настройки исследования
+          Настройки веб-исследования
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="space-y-2">
-          <Label htmlFor="topic" className="text-sm font-medium">Тема исследования</Label>
+          <Label htmlFor="topic" className="text-sm font-medium">Тема веб-исследования</Label>
           <Textarea
             id="topic"
             value={topic}
             onChange={(e) => setTopic(e.target.value)}
-            placeholder="Введите вашу тему исследования..."
+            placeholder="Введите тему для глубокого веб-исследования..."
             rows={3}
             className="border-muted focus:border-foreground transition-colors duration-200"
           />
@@ -106,29 +106,29 @@ const ResearchSettings: React.FC<ResearchSettingsProps> = ({
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="phd">Уровень PhD</SelectItem>
-              <SelectItem value="bachelor">Уровень бакалавра</SelectItem>
-              <SelectItem value="school">Школьный уровень</SelectItem>
+              <SelectItem value="phd">Уровень PhD (Продвинутый)</SelectItem>
+              <SelectItem value="bachelor">Уровень бакалавра (Академический)</SelectItem>
+              <SelectItem value="school">Школьный уровень (Простой)</SelectItem>
             </SelectContent>
           </Select>
         </div>
 
         <div className="space-y-2">
-          <Label className="text-sm font-medium">AI модель</Label>
+          <Label className="text-sm font-medium">Основная AI модель</Label>
           <Select value={settings.model} onValueChange={(value) => setSettings({...settings, model: value})}>
             <SelectTrigger className="border-muted focus:border-foreground">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="gemini-2.0-flash">Gemini 2.0 Flash</SelectItem>
-              <SelectItem value="gemini-1.5-pro">Gemini 1.5 Pro</SelectItem>
-              <SelectItem value="gemini-1.5-flash">Gemini 1.5 Flash</SelectItem>
+              <SelectItem value="gemini-2.0-flash">Gemini 2.0 Flash (Веб-поиск)</SelectItem>
+              <SelectItem value="gemini-2.0-flash-exp">Gemini 2.0 Flash Exp (Веб-поиск)</SelectItem>
+              <SelectItem value="gemini-1.5-pro">Gemini 1.5 Pro (Веб-поиск)</SelectItem>
             </SelectContent>
           </Select>
         </div>
 
         <div className="space-y-2">
-          <Label className="text-sm font-medium">Глубина поиска</Label>
+          <Label className="text-sm font-medium">Интенсивность веб-поиска</Label>
           <Select value={settings.searchDepth} onValueChange={(value: any) => setSettings({...settings, searchDepth: value})}>
             <SelectTrigger className="border-muted focus:border-foreground">
               <SelectValue />
@@ -142,20 +142,25 @@ const ResearchSettings: React.FC<ResearchSettingsProps> = ({
         </div>
 
         <div className="flex items-center justify-between">
-          <Label className="text-sm font-medium">Включить Grounding</Label>
+          <div className="space-y-1">
+            <Label className="text-sm font-medium">Принудительный веб-поиск</Label>
+            <p className="text-xs text-muted-foreground">Всегда включен - не использует внутренние базы знаний</p>
+          </div>
           <Switch
-            checked={settings.useGrounding}
-            onCheckedChange={(checked) => setSettings({...settings, useGrounding: checked})}
+            checked={true}
+            disabled={true}
+            className="opacity-50"
           />
         </div>
 
         <div className="space-y-2">
           <Label className="text-sm font-medium">Количество слов: {settings.wordCount.toLocaleString()}</Label>
+          <p className="text-xs text-muted-foreground">Распределяется между 5 моделями Gemini 2.5 Flash Preview</p>
           <input
             type="range"
-            min="2000"
-            max="50000"
-            step="1000"
+            min="5000"
+            max="100000"
+            step="5000"
             value={settings.wordCount}
             onChange={(e) => setSettings({...settings, wordCount: parseInt(e.target.value)})}
             className="w-full h-1 bg-muted rounded-lg appearance-none cursor-pointer slider"
@@ -163,12 +168,13 @@ const ResearchSettings: React.FC<ResearchSettingsProps> = ({
         </div>
 
         <div className="space-y-2">
-          <Label className="text-sm font-medium">Параллельные запросы: {settings.parallelQueries}</Label>
+          <Label className="text-sm font-medium">Параллельные веб-запросы: {settings.parallelQueries}</Label>
+          <p className="text-xs text-muted-foreground">Максимальные лимиты для глубокого веб-поиска</p>
           <input
             type="range"
-            min="2"
-            max="200"
-            step="2"
+            min="10"
+            max="500"
+            step="10"
             value={settings.parallelQueries}
             onChange={(e) => setSettings({...settings, parallelQueries: parseInt(e.target.value)})}
             className="w-full h-1 bg-muted rounded-lg appearance-none cursor-pointer slider"
@@ -179,9 +185,9 @@ const ResearchSettings: React.FC<ResearchSettingsProps> = ({
           <Label className="text-sm font-medium">Размер батча: {settings.batchSize}</Label>
           <input
             type="range"
-            min="1"
-            max="50"
-            step="1"
+            min="5"
+            max="100"
+            step="5"
             value={settings.batchSize}
             onChange={(e) => setSettings({...settings, batchSize: parseInt(e.target.value)})}
             className="w-full h-1 bg-muted rounded-lg appearance-none cursor-pointer slider"
@@ -192,7 +198,7 @@ const ResearchSettings: React.FC<ResearchSettingsProps> = ({
         <div className="space-y-3">
           <Label className="text-sm font-medium flex items-center gap-2">
             <Globe className="h-4 w-4" />
-            Пользовательский URL контекст ({settings.customUrls.length})
+            Пользовательские URL для веб-поиска ({settings.customUrls.length})
           </Label>
           
           {/* Single URL input */}
@@ -214,7 +220,7 @@ const ResearchSettings: React.FC<ResearchSettingsProps> = ({
             <Textarea
               value={bulkUrls}
               onChange={(e) => setBulkUrls(e.target.value)}
-              placeholder="Вставьте несколько URL (по одному на строке или через запятую)"
+              placeholder="Вставьте несколько URL для включения в веб-поиск"
               rows={3}
               className="text-xs"
             />
@@ -260,13 +266,13 @@ const ResearchSettings: React.FC<ResearchSettingsProps> = ({
         >
           {isResearching ? (
             <>
-              <Settings className="mr-2 h-5 w-5 animate-spin" />
-              Исследую...
+              <Globe className="mr-2 h-5 w-5 animate-spin" />
+              Веб-исследование...
             </>
           ) : (
             <>
-              <Settings className="mr-2 h-5 w-5" />
-              Начать исследование
+              <Globe className="mr-2 h-5 w-5" />
+              Начать веб-исследование
             </>
           )}
         </Button>

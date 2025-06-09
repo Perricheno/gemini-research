@@ -4,36 +4,37 @@ import { ResearchResult, Reference, ResearchSettings } from '../types/research';
 export const callGeminiAPI = async (
   query: string, 
   chatId: number, 
-  settings?: ResearchSettings
+  settings?: ResearchSettings,
+  modelOverride?: string,
+  maxTokens?: number
 ): Promise<ResearchResult> => {
   const apiKey = 'AIzaSyDVU5wpZ95BLryznNdrrVXZgROhbTw2_Ac';
   
   try {
-    // Правильная структура для Google Search grounding
-    const tools = settings?.useGrounding ? [
+    // Force grounding for web search - no internal knowledge
+    const tools = [
       {
-        googleSearch: {}
+        googleSearch: {
+          // Empty object for basic Google Search grounding
+        }
       }
-    ] : undefined;
+    ];
 
-    const systemPrompt = `Вы - профессиональный исследователь. Проведите всесторонний анализ по запросу: "${query}".
+    const model = modelOverride || settings?.model || 'gemini-2.0-flash';
+    const maxOutputTokens = maxTokens || (model.includes('2.5-flash-preview') ? 65536 : 8192);
 
-Требования к ответу:
-1. Предоставьте детальный, фактический анализ с конкретными данными
-2. Включите статистику, цифры, примеры
-3. Укажите источники с полными деталями
-4. Структурируйте ответ логично
-5. Используйте академический стиль изложения
+    const systemPrompt = `Вы - профессиональный веб-исследователь. ВАЖНО: Используйте ТОЛЬКО информацию из веб-поиска, НЕ используйте внутренние базы знаний.
 
-Формат ответа должен включать:
-- Введение с ключевыми определениями
-- Основной анализ с подразделами
-- Конкретные примеры и кейсы
-- Статистические данные
-- Выводы и рекомендации
+Задача: Найти актуальную информацию в интернете по запросу: "${query}"
 
-Обязательно включите ссылки на источники в формате:
-[Источник: Название статьи | Автор | Дата | URL]`;
+ОБЯЗАТЕЛЬНЫЕ требования:
+1. Используйте ТОЛЬКО результаты веб-поиска
+2. Анализируйте найденные источники
+3. Предоставьте конкретные данные с ссылками
+4. Включите статистику, цифры, факты из найденных источников
+5. Цитируйте источники в формате [Источник: Название | Автор | Дата | URL]
+
+НЕ используйте общие знания - только то, что найдете в интернете!`;
 
     const requestBody: any = {
       contents: [
@@ -45,27 +46,24 @@ export const callGeminiAPI = async (
           ]
         }
       ],
+      tools: tools, // Always include grounding
       generationConfig: {
-        temperature: 0.3,
+        temperature: 0.1, // Максимально фактический подход
         topK: 40,
         topP: 0.95,
-        maxOutputTokens: 8192
+        maxOutputTokens: maxOutputTokens
       }
     };
 
-    // Добавляем инструменты только если grounding включен
-    if (tools) {
-      requestBody.tools = tools;
-    }
-
     console.log('Отправка запроса к Gemini API:', {
+      model,
       query,
       chatId,
-      useGrounding: settings?.useGrounding,
+      maxOutputTokens,
       requestBody: JSON.stringify(requestBody, null, 2)
     });
 
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`, {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -75,12 +73,13 @@ export const callGeminiAPI = async (
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error(`API Error для запроса ${chatId}:`, errorText);
+      console.error(`API Error для модели ${model}, запрос ${chatId}:`, errorText);
       throw new Error(`API Error: ${errorText}`);
     }
 
     const data = await response.json();
     console.log('Получен ответ от Gemini API:', {
+      model,
       chatId,
       hasData: !!data,
       hasCandidates: !!data.candidates,
@@ -95,6 +94,7 @@ export const callGeminiAPI = async (
     const references = extractReferences(responseText, settings?.customUrls || []);
 
     console.log('Обработка завершена:', {
+      model,
       chatId,
       responseLength: responseText.length,
       referencesCount: references.length
@@ -106,18 +106,20 @@ export const callGeminiAPI = async (
       references,
       chatId,
       status: 'completed',
-      timestamp: new Date()
+      timestamp: new Date(),
+      model: model
     };
 
   } catch (error) {
-    console.error(`Ошибка API для запроса ${chatId}:`, error);
+    console.error(`Ошибка API для модели ${modelOverride || settings?.model}, запрос ${chatId}:`, error);
     return {
       query,
       response: error.message || 'Неизвестная ошибка',
       references: [],
       chatId,
       status: 'error',
-      timestamp: new Date()
+      timestamp: new Date(),
+      model: modelOverride || settings?.model || 'unknown'
     };
   }
 };
@@ -139,7 +141,7 @@ const extractReferences = (text: string, customUrls: string[]): Reference[] => {
         publishDate: date?.trim() || undefined,
         url: url.trim(),
         domain: extractDomain(url.trim()),
-        description: `Источник по теме исследования`
+        description: `Найден через веб-поиск`
       });
     }
   }
@@ -150,21 +152,9 @@ const extractReferences = (text: string, customUrls: string[]): Reference[] => {
       title: `Пользовательский источник ${index + 1}`,
       url,
       domain: extractDomain(url),
-      description: 'Добавлено пользователем в контекст исследования'
+      description: 'Добавлено пользователем в контекст поиска'
     });
   });
-
-  // Если не найдено ссылок в тексте, создаем общие ссылки
-  if (references.length === 0) {
-    for (let i = 0; i < 3; i++) {
-      references.push({
-        title: `Исследовательский источник ${i + 1}`,
-        url: '#citation',
-        domain: 'research.source',
-        description: 'Академический источник для исследования'
-      });
-    }
-  }
 
   return references;
 };
