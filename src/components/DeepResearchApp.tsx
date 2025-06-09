@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -10,7 +9,7 @@ import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
-import { Search, Brain, FileText, Download, Settings, Eye, EyeOff, MessageSquare, Zap, Clock, BarChart3, Globe, Link, Plus, Trash2 } from 'lucide-react';
+import { Search, Brain, FileText, Download, Settings, Eye, EyeOff, MessageSquare, Zap, Clock, BarChart3, Globe, Link, Plus, Trash2, Upload } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface ResearchResult {
@@ -79,6 +78,7 @@ const DeepResearchApp = () => {
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [activeTab, setActiveTab] = useState<'chat' | 'results' | 'report'>('chat');
   const [newUrl, setNewUrl] = useState('');
+  const [bulkUrls, setBulkUrls] = useState('');
 
   const addChatMessage = (type: ChatMessage['type'], content: string, metadata?: any) => {
     const message: ChatMessage = {
@@ -98,7 +98,28 @@ const DeepResearchApp = () => {
         customUrls: [...prev.customUrls, newUrl.trim()]
       }));
       setNewUrl('');
-      toast.success('URL added to research context');
+      toast.success('URL добавлен в исследовательский контекст');
+    }
+  };
+
+  const addBulkUrls = () => {
+    if (bulkUrls.trim()) {
+      const urls = bulkUrls
+        .split(/[\n,;]/)
+        .map(url => url.trim())
+        .filter(url => url && url.startsWith('http'))
+        .filter(url => !settings.customUrls.includes(url));
+      
+      if (urls.length > 0) {
+        setSettings(prev => ({
+          ...prev,
+          customUrls: [...prev.customUrls, ...urls]
+        }));
+        setBulkUrls('');
+        toast.success(`Добавлено ${urls.length} URL в исследовательский контекст`);
+      } else {
+        toast.error('Не найдены валидные URL в тексте');
+      }
     }
   };
 
@@ -109,231 +130,17 @@ const DeepResearchApp = () => {
     }));
   };
 
-  const generateResearchQueries = (topic: string, count: number): string[] => {
-    const baseQueries = [
-      `${topic} latest research 2024 2025`,
-      `${topic} scientific studies peer reviewed`,
-      `${topic} market analysis comprehensive report`,
-      `${topic} case studies real world applications`,
-      `${topic} best practices industry standards`,
-      `${topic} future trends predictions`,
-      `${topic} expert opinions thought leaders`,
-      `${topic} statistical data analytics`,
-      `${topic} comparative analysis benchmarks`,
-      `${topic} methodology frameworks`,
-      `${topic} implementation strategies`,
-      `${topic} challenges solutions innovation`,
-      `${topic} global perspective international`,
-      `${topic} technological advancement breakthrough`,
-      `${topic} economic impact financial analysis`,
-      `${topic} social implications societal effects`,
-      `${topic} environmental sustainability impact`,
-      `${topic} regulatory framework policy`,
-      `${topic} innovation disruption emerging`,
-      `${topic} academic research university studies`,
-      `${topic} industry reports white papers`,
-      `${topic} success stories failure analysis`,
-      `${topic} regional differences cultural`,
-      `${topic} historical evolution timeline`,
-      `${topic} cross-disciplinary applications`,
-      `${topic} data-driven insights evidence`,
-      `${topic} professional development career`,
-      `${topic} competitive landscape analysis`,
-      `${topic} risk assessment mitigation`,
-      `${topic} performance metrics KPIs`
-    ];
-
-    const advancedQueries = [
-      `advanced ${topic} methodologies`,
-      `${topic} machine learning AI applications`,
-      `${topic} blockchain cryptocurrency integration`,
-      `${topic} Internet of Things IoT`,
-      `${topic} sustainability green technology`,
-      `${topic} cybersecurity privacy concerns`,
-      `${topic} cloud computing scalability`,
-      `${topic} automation efficiency optimization`,
-      `${topic} big data analytics insights`,
-      `${topic} mobile technology applications`,
-      `${topic} artificial intelligence enhancement`,
-      `${topic} virtual reality augmented reality`,
-      `${topic} quantum computing potential`,
-      `${topic} 5G technology implementation`,
-      `${topic} digital transformation strategy`
-    ];
-
-    const extendedQueries = [...baseQueries, ...advancedQueries];
-    const finalQueries = [];
-    
-    for (let i = 0; i < count; i++) {
-      if (i < extendedQueries.length) {
-        finalQueries.push(extendedQueries[i]);
-      } else {
-        const variations = [
-          `comprehensive ${topic} analysis`,
-          `emerging ${topic} technologies`,
-          `${topic} market opportunities`,
-          `${topic} strategic planning`,
-          `${topic} performance optimization`,
-          `${topic} cost benefit analysis`,
-          `${topic} stakeholder perspectives`,
-          `${topic} quality assurance standards`
-        ];
-        finalQueries.push(variations[i % variations.length] + ` variant ${Math.floor(i / variations.length) + 1}`);
-      }
-    }
-    
-    return finalQueries;
-  };
-
-  const callGeminiAPI = async (query: string, chatId: number): Promise<ResearchResult> => {
-    console.log(`Starting query ${chatId}: ${query}`);
-    
-    try {
-      const requestBody: any = {
-        contents: [{
-          parts: [{
-            text: `Conduct comprehensive research and analysis on: "${query}". 
-
-Please provide:
-1. Detailed analysis with specific data, statistics, and numerical evidence
-2. Recent developments and current trends (2024-2025)
-3. Key findings, insights, and expert opinions
-4. Credible sources with proper citations
-5. Real-world case studies and examples
-6. Future implications and recommendations
-
-Focus on providing authoritative, well-sourced information with proper academic citations.`
-          }]
-        }],
-        generationConfig: {
-          temperature: 0.3,
-          topK: 40,
-          topP: 0.9,
-          maxOutputTokens: 8192,
-        }
-      };
-
-      if (settings.useGrounding) {
-        requestBody.tools = [{
-          googleSearch: {
-            dynamicRetrievalConfig: {
-              mode: "MODE_DYNAMIC",
-              dynamicThreshold: 0.7
-            }
-          }
-        }];
-
-        if (settings.customUrls.length > 0) {
-          requestBody.contents[0].parts[0].text += `\n\nPrioritize information from these specific sources: ${settings.customUrls.join(', ')}`;
-        }
-      }
-
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${settings.model}:generateContent?key=${apiKey}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(requestBody),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error(`API call failed for query ${chatId}:`, errorData);
-        throw new Error(`API Error: ${errorData.error?.message || 'Unknown error'}`);
-      }
-
-      const data = await response.json();
-      const content = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-      
-      const references = extractReferences(content);
-      
-      console.log(`Completed query ${chatId}: Found ${references.length} references`);
-      
-      return {
-        query,
-        response: content,
-        references,
-        chatId,
-        status: 'completed',
-        timestamp: new Date()
-      };
-    } catch (error) {
-      console.error(`Error in query ${chatId}:`, error);
-      return {
-        query,
-        response: `Error: ${error.message}`,
-        references: [],
-        chatId,
-        status: 'error',
-        timestamp: new Date()
-      };
-    }
-  };
-
-  const extractReferences = (text: string): Reference[] => {
-    const references: Reference[] = [];
-    
-    // Extract URLs with better pattern matching
-    const urlRegex = /https?:\/\/(?:www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b(?:[-a-zA-Z0-9()@:%_\+.~#?&=]*)/g;
-    const urls = text.match(urlRegex) || [];
-    
-    urls.forEach(url => {
-      try {
-        const urlObj = new URL(url);
-        const domain = urlObj.hostname.replace('www.', '');
-        
-        // Extract title from surrounding text
-        const urlIndex = text.indexOf(url);
-        const contextBefore = text.substring(Math.max(0, urlIndex - 200), urlIndex);
-        const contextAfter = text.substring(urlIndex + url.length, Math.min(text.length, urlIndex + url.length + 200));
-        
-        // Simple title extraction logic
-        let title = url;
-        const titleMatch = contextBefore.match(/["']([^"']{10,100})["']/);
-        if (titleMatch) {
-          title = titleMatch[1];
-        }
-        
-        references.push({
-          url,
-          title,
-          domain,
-          description: contextAfter.split('.')[0] || ''
-        });
-      } catch (e) {
-        // Invalid URL, skip
-      }
-    });
-    
-    // Extract citation patterns
-    const citationPatterns = [
-      /\(([^)]+\d{4}[^)]*)\)/g,
-      /\[(\d+)\]\s*([^\n]{20,100})/g,
-      /Source:\s*([^\n]{10,150})/gi,
-      /Reference:\s*([^\n]{10,150})/gi,
-      /According to\s+([^\n]{10,100})/gi
-    ];
-    
-    citationPatterns.forEach(pattern => {
-      const matches = [...text.matchAll(pattern)];
-      matches.forEach(match => {
-        if (match[1]) {
-          references.push({
-            url: '#citation',
-            title: match[1].trim(),
-            domain: 'citation',
-            description: match[2] ? match[2].trim() : ''
-          });
-        }
-      });
-    });
-    
-    return references;
+  const clearAllUrls = () => {
+    setSettings(prev => ({
+      ...prev,
+      customUrls: []
+    }));
+    toast.success('Все URL удалены');
   };
 
   const conductParallelResearch = async () => {
     if (!topic.trim()) {
-      toast.error('Please enter a research topic');
+      toast.error('Пожалуйста, введите тему исследования');
       return;
     }
 
@@ -345,12 +152,12 @@ Focus on providing authoritative, well-sourced information with proper academic 
     setCompletedQueries(0);
     setActiveTab('results');
 
-    addChatMessage('user', `Starting deep research on: ${topic}`);
-    addChatMessage('system', `Initializing ${settings.parallelQueries} parallel queries with ${settings.model} model...`);
-    addChatMessage('system', `Research settings: ${settings.searchDepth} search, grounding ${settings.useGrounding ? 'enabled' : 'disabled'}, batch size: ${settings.batchSize}`);
+    addChatMessage('user', `Начинаем глубокое исследование по теме: ${topic}`);
+    addChatMessage('system', `Инициализируем ${settings.parallelQueries} параллельных запросов с моделью ${settings.model}...`);
+    addChatMessage('system', `Настройки исследования: ${settings.searchDepth} глубина поиска, grounding ${settings.useGrounding ? 'включено' : 'выключено'}, размер батча: ${settings.batchSize}`);
 
     try {
-      setCurrentStep('Generating comprehensive research queries...');
+      setCurrentStep('Генерация всесторонних исследовательских запросов...');
       const queries = generateResearchQueries(topic, settings.parallelQueries);
       
       const initialResults: ResearchResult[] = queries.map((query, index) => ({
@@ -363,8 +170,8 @@ Focus on providing authoritative, well-sourced information with proper academic 
       }));
       setResults(initialResults);
       
-      setCurrentStep(`Executing ${queries.length} parallel research queries...`);
-      addChatMessage('system', `Generated ${queries.length} research queries. Starting parallel execution with batches of ${settings.batchSize}...`);
+      setCurrentStep(`Выполнение ${queries.length} параллельных исследовательских запросов...`);
+      addChatMessage('system', `Сгенерировано ${queries.length} исследовательских запросов. Начинаем параллельное выполнение с батчей размером ${settings.batchSize}...`);
       
       const allResults: ResearchResult[] = [];
       
@@ -373,8 +180,8 @@ Focus on providing authoritative, well-sourced information with proper academic 
         const batchNumber = Math.floor(i / settings.batchSize) + 1;
         const totalBatches = Math.ceil(queries.length / settings.batchSize);
         
-        console.log(`Processing batch ${batchNumber}/${totalBatches} (${batch.length} queries)`);
-        addChatMessage('system', `Processing batch ${batchNumber}/${totalBatches}...`);
+        console.log(`Обработка батча ${batchNumber}/${totalBatches} (${batch.length} запросов)`);
+        addChatMessage('system', `Обработка батча ${batchNumber}/${totalBatches}...`);
         
         const batchPromises = batch.map((query, index) => 
           callGeminiAPI(query, i + index + 1)
@@ -393,13 +200,13 @@ Focus on providing authoritative, well-sourced information with proper academic 
               ));
 
               if (result.value.status === 'completed') {
-                addChatMessage('research', `Query ${result.value.chatId} completed: ${result.value.references.length} references found`);
+                addChatMessage('research', `Запрос ${result.value.chatId} завершен: найдено ${result.value.references.length} ссылок`);
               }
             } else {
-              console.error(`Query failed: ${batch[index]}`, result.reason);
+              console.error(`Запрос не выполнен: ${batch[index]}`, result.reason);
               const errorResult: ResearchResult = {
                 query: batch[index],
-                response: `Error: ${result.reason}`,
+                response: `Ошибка: ${result.reason}`,
                 references: [],
                 chatId: i + index + 1,
                 status: 'error',
@@ -412,38 +219,38 @@ Focus on providing authoritative, well-sourced information with proper academic 
                 r.chatId === errorResult.chatId ? errorResult : r
               ));
 
-              addChatMessage('system', `Query ${errorResult.chatId} failed: ${result.reason}`);
+              addChatMessage('system', `Запрос ${errorResult.chatId} не выполнен: ${result.reason}`);
             }
           });
           
           setProgress(((i + settings.batchSize) / queries.length) * 70);
           
-          // Reduced delay for better performance with higher limits
+          // Уменьшенная задержка для улучшения производительности с более высокими ограничениями
           await new Promise(resolve => setTimeout(resolve, 1000));
         } catch (error) {
-          console.error('Batch error:', error);
-          addChatMessage('system', `Batch processing error: ${error.message}`);
+          console.error('Батчная ошибка:', error);
+          addChatMessage('system', `Ошибка обработки батча: ${error.message}`);
         }
       }
 
       const totalRefs = allResults.reduce((sum, result) => sum + result.references.length, 0);
       setTotalReferences(totalRefs);
       
-      addChatMessage('system', `Research completed! ${allResults.length} queries processed with ${totalRefs} references found.`);
+      addChatMessage('system', `Исследование завершено! Процессинг ${allResults.length} запросов с найденными ${totalRefs} ссылками.`);
       
-      setCurrentStep('Analyzing and synthesizing research data...');
+      setCurrentStep('Анализ и синтез исследовательских данных...');
       setProgress(75);
       
       await generateFinalReport(allResults);
       
     } catch (error) {
-      console.error('Research error:', error);
-      addChatMessage('system', `Research failed: ${error.message}`);
-      toast.error('Research failed. Please try again.');
+      console.error('Исследование завершено с ошибкой:', error);
+      addChatMessage('system', `Исследование завершено с ошибкой: ${error.message}`);
+      toast.error('Исследование завершено с ошибкой. Пожалуйста, попробуйте снова.');
     } finally {
       setIsResearching(false);
       setProgress(100);
-      setCurrentStep('Research completed!');
+      setCurrentStep('Исследование завершено!');
     }
   };
 
@@ -452,13 +259,13 @@ Focus on providing authoritative, well-sourced information with proper academic 
     const combinedData = successfulResults.map(r => r.response).join('\n\n');
     const allReferences = successfulResults.flatMap(r => r.references);
     
-    addChatMessage('system', 'Generating comprehensive research report...');
+    addChatMessage('system', 'Генерация всестороннего исследовательского отчета...');
     setActiveTab('report');
 
     const toneInstructions = {
-      phd: 'Write in an academic, scholarly tone suitable for PhD-level research. Use sophisticated vocabulary, complex sentence structures, rigorous analytical approach, and extensive citations.',
-      bachelor: 'Write in a clear, academic tone suitable for undergraduate level. Balance accessibility with academic rigor, include proper citations and structured analysis.',
-      school: 'Write in clear, accessible language suitable for high school students. Explain complex concepts simply while maintaining factual accuracy.'
+      phd: 'Напишите в академическом, научном тоне, подходящем для исследования PhD-уровня. Используйте сложные слова, сложные предложные конструкции, резервированный аналитический подход и расширенные цитаты.',
+      bachelor: 'Напишите в ясном, академическом тоне, подходящем для бакалавра. Балансируйте доступность с академической rigor, включите правильные цитаты и строительную аналитику.',
+      school: 'Напишите в ясном, доступном для школьников тоне. Объясняйте сложные концепции просто, сохраняя фактическую точность.'
     };
 
     const wordsPerChunk = Math.min(3000, Math.floor(settings.wordCount / 4));
@@ -467,25 +274,25 @@ Focus on providing authoritative, well-sourced information with proper academic 
     let fullReport = '';
     
     for (let i = 0; i < chunks; i++) {
-      setCurrentStep(`Generating report section ${i + 1}/${chunks}...`);
-      addChatMessage('system', `Writing section ${i + 1} of ${chunks}...`);
+      setCurrentStep(`Генерация отчетной части ${i + 1}/${chunks}...`);
+      addChatMessage('system', `Пишем часть ${i + 1} из ${chunks}...`);
       
       const sectionPrompt = `
-        Based on the comprehensive research data provided, write section ${i + 1} of ${chunks} of a professional research report on "${topic}".
+        На основе всестороннего исследовательского данных, напишите часть ${i + 1} из ${chunks} отчета по теме "${topic}".
         
-        Research data: ${combinedData.substring(i * 5000, (i + 1) * 5000)}
+        Исследовательские данные: ${combinedData.substring(i * 5000, (i + 1) * 5000)}
         
-        Requirements:
+        Требования:
         - ${toneInstructions[settings.tone]}
-        - Target length: approximately ${wordsPerChunk} words for this section
-        - Include specific data, statistics, quantitative evidence, and examples from the research
-        - Maintain professional academic structure with clear headings and subheadings
-        - Reference sources appropriately with proper citations
-        - Use evidence-based analysis and draw meaningful conclusions
-        ${i === 0 ? '- Start with executive summary, introduction, and methodology' : ''}
-        ${i === chunks - 1 ? '- End with conclusions, recommendations, and future research directions' : ''}
+        - Целевая длина: приблизительно ${wordsPerChunk} слов для этой части
+        - Включите конкретные данные, статистику, численные доказательства и примеры из исследования
+        - Сохраните профессиональную академическую структуру с четкими заголовками и подзаголовками
+        - Ссылки на источники правильно цитируются с правильными академическими цитатами
+        - Используйте доказательную аналитику и делайте значимые выводы
+        ${i === 0 ? '- Начните с executive summary, introduction и methodology' : ''}
+        ${i === chunks - 1 ? '- Закончите с conclusions, recommendations и future research directions' : ''}
         
-        Structure this section professionally with clear logical flow and authoritative presentation.
+        Структуру этой части профессионально с четким логическим потоком и авторитетной презентацией.
       `;
 
       try {
@@ -494,12 +301,12 @@ Focus on providing authoritative, well-sourced information with proper academic 
         
         setProgress(75 + (i + 1) / chunks * 20);
       } catch (error) {
-        console.error(`Error generating section ${i + 1}:`, error);
-        addChatMessage('system', `Error generating section ${i + 1}: ${error.message}`);
+        console.error(`Ошибка генерации части ${i + 1}:`, error);
+        addChatMessage('system', `Ошибка генерации части ${i + 1}: ${error.message}`);
       }
     }
     
-    // Process and deduplicate references
+    // Обработка и удаление дубликатов ссылок
     const uniqueReferences = new Map<string, Reference>();
     allReferences.forEach(ref => {
       const key = ref.url + ref.title;
@@ -508,27 +315,27 @@ Focus on providing authoritative, well-sourced information with proper academic 
       }
     });
     
-    fullReport += '\n\n## References and Sources\n\n';
+    fullReport += '\n\n## Список источников и ссылок\n\n';
     Array.from(uniqueReferences.values()).forEach((ref, index) => {
       fullReport += `${index + 1}. **${ref.title}**\n`;
       if (ref.url !== '#citation') {
         fullReport += `   URL: ${ref.url}\n`;
       }
       if (ref.author) {
-        fullReport += `   Author: ${ref.author}\n`;
+        fullReport += `   Автор: ${ref.author}\n`;
       }
       if (ref.publishDate) {
-        fullReport += `   Published: ${ref.publishDate}\n`;
+        fullReport += `   Опубликовано: ${ref.publishDate}\n`;
       }
       if (ref.description) {
-        fullReport += `   Description: ${ref.description}\n`;
+        fullReport += `   Описание: ${ref.description}\n`;
       }
-      fullReport += `   Domain: ${ref.domain}\n\n`;
+      fullReport += `   Домен: ${ref.domain}\n\n`;
     });
     
     setFinalReport(fullReport);
-    addChatMessage('system', `Professional research report completed! ${fullReport.length} characters, ${uniqueReferences.size} unique references.`);
-    toast.success('Professional research report generated successfully!');
+    addChatMessage('system', `Профессиональный исследовательский отчет сгенерирован! Длина: ${fullReport.length} символов, ${uniqueReferences.size} уникальных ссылок.`);
+    toast.success('Профессиональный исследовательский отчет сгенерирован успешно!');
   };
 
   const downloadReport = () => {
@@ -539,8 +346,8 @@ Focus on providing authoritative, well-sourced information with proper academic 
     a.download = `professional-research-${topic.replace(/\s+/g, '-')}-${new Date().toISOString().split('T')[0]}.txt`;
     a.click();
     URL.revokeObjectURL(url);
-    addChatMessage('system', 'Professional research report downloaded successfully!');
-    toast.success('Report downloaded successfully!');
+    addChatMessage('system', 'Профессиональный исследовательский отчет загружен успешно!');
+    toast.success('Отчет загружен успешно!');
   };
 
   return (
@@ -563,38 +370,38 @@ Focus on providing authoritative, well-sourced information with proper academic 
               <CardHeader>
                 <CardTitle className="flex items-center gap-3 text-xl font-light">
                   <Settings className="h-5 w-5" />
-                  Research Settings
+                  Настройки исследования
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="space-y-2">
-                  <Label htmlFor="topic" className="text-sm font-medium">Research Topic</Label>
+                  <Label htmlFor="topic" className="text-sm font-medium">Тема исследования</Label>
                   <Textarea
                     id="topic"
                     value={topic}
                     onChange={(e) => setTopic(e.target.value)}
-                    placeholder="Enter your research topic..."
+                    placeholder="Введите вашу тему исследования..."
                     rows={3}
                     className="border-muted focus:border-foreground transition-colors duration-200"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label className="text-sm font-medium">Academic Level</Label>
+                  <Label className="text-sm font-medium">Академический уровень</Label>
                   <Select value={settings.tone} onValueChange={(value: any) => setSettings({...settings, tone: value})}>
                     <SelectTrigger className="border-muted focus:border-foreground">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="phd">PhD Level</SelectItem>
-                      <SelectItem value="bachelor">Bachelor Level</SelectItem>
-                      <SelectItem value="school">School Level</SelectItem>
+                      <SelectItem value="phd">Уровень PhD</SelectItem>
+                      <SelectItem value="bachelor">Уровень бакалавра</SelectItem>
+                      <SelectItem value="school">Школьный уровень</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
 
                 <div className="space-y-2">
-                  <Label className="text-sm font-medium">AI Model</Label>
+                  <Label className="text-sm font-medium">AI модель</Label>
                   <Select value={settings.model} onValueChange={(value) => setSettings({...settings, model: value})}>
                     <SelectTrigger className="border-muted focus:border-foreground">
                       <SelectValue />
@@ -608,21 +415,21 @@ Focus on providing authoritative, well-sourced information with proper academic 
                 </div>
 
                 <div className="space-y-2">
-                  <Label className="text-sm font-medium">Search Depth</Label>
+                  <Label className="text-sm font-medium">Глубина поиска</Label>
                   <Select value={settings.searchDepth} onValueChange={(value: any) => setSettings({...settings, searchDepth: value})}>
                     <SelectTrigger className="border-muted focus:border-foreground">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="shallow">Shallow (Fast)</SelectItem>
-                      <SelectItem value="medium">Medium (Balanced)</SelectItem>
-                      <SelectItem value="deep">Deep (Comprehensive)</SelectItem>
+                      <SelectItem value="shallow">Поверхностный (Быстро)</SelectItem>
+                      <SelectItem value="medium">Средний (Сбалансированно)</SelectItem>
+                      <SelectItem value="deep">Глубокий (Всесторонне)</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
 
                 <div className="flex items-center justify-between">
-                  <Label className="text-sm font-medium">Enable Grounding</Label>
+                  <Label className="text-sm font-medium">Включить Grounding</Label>
                   <Switch
                     checked={settings.useGrounding}
                     onCheckedChange={(checked) => setSettings({...settings, useGrounding: checked})}
@@ -630,7 +437,7 @@ Focus on providing authoritative, well-sourced information with proper academic 
                 </div>
 
                 <div className="space-y-2">
-                  <Label className="text-sm font-medium">Word Count: {settings.wordCount.toLocaleString()}</Label>
+                  <Label className="text-sm font-medium">Количество слов: {settings.wordCount.toLocaleString()}</Label>
                   <input
                     type="range"
                     min="2000"
@@ -643,7 +450,7 @@ Focus on providing authoritative, well-sourced information with proper academic 
                 </div>
 
                 <div className="space-y-2">
-                  <Label className="text-sm font-medium">Parallel Queries: {settings.parallelQueries}</Label>
+                  <Label className="text-sm font-medium">Параллельные запросы: {settings.parallelQueries}</Label>
                   <input
                     type="range"
                     min="2"
@@ -656,11 +463,11 @@ Focus on providing authoritative, well-sourced information with proper academic 
                 </div>
 
                 <div className="space-y-2">
-                  <Label className="text-sm font-medium">Batch Size: {settings.batchSize}</Label>
+                  <Label className="text-sm font-medium">Размер батча: {settings.batchSize}</Label>
                   <input
                     type="range"
                     min="1"
-                    max="20"
+                    max="50"
                     step="1"
                     value={settings.batchSize}
                     onChange={(e) => setSettings({...settings, batchSize: parseInt(e.target.value)})}
@@ -672,8 +479,10 @@ Focus on providing authoritative, well-sourced information with proper academic 
                 <div className="space-y-3">
                   <Label className="text-sm font-medium flex items-center gap-2">
                     <Globe className="h-4 w-4" />
-                    Custom URL Context
+                    Пользовательский URL контекст ({settings.customUrls.length})
                   </Label>
+                  
+                  {/* Single URL input */}
                   <div className="flex gap-2">
                     <Input
                       value={newUrl}
@@ -685,17 +494,42 @@ Focus on providing authoritative, well-sourced information with proper academic 
                       <Plus className="h-4 w-4" />
                     </Button>
                   </div>
+
+                  {/* Bulk URL input */}
+                  <div className="space-y-2">
+                    <Label className="text-xs text-muted-foreground">Массовое добавление URL (Ctrl+V)</Label>
+                    <Textarea
+                      value={bulkUrls}
+                      onChange={(e) => setBulkUrls(e.target.value)}
+                      placeholder="Вставьте несколько URL (по одному на строке или через запятую)"
+                      rows={3}
+                      className="text-xs"
+                    />
+                    <div className="flex gap-2">
+                      <Button onClick={addBulkUrls} size="sm" variant="outline" className="flex-1">
+                        <Upload className="h-3 w-3 mr-1" />
+                        Добавить все
+                      </Button>
+                      {settings.customUrls.length > 0 && (
+                        <Button onClick={clearAllUrls} size="sm" variant="outline" className="text-destructive">
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* URL list */}
                   {settings.customUrls.length > 0 && (
-                    <div className="space-y-2 max-h-32 overflow-y-auto">
+                    <div className="space-y-2 max-h-32 overflow-y-auto border border-muted rounded p-2">
                       {settings.customUrls.map((url, index) => (
-                        <div key={index} className="flex items-center gap-2 text-xs">
-                          <Link className="h-3 w-3 text-muted-foreground" />
-                          <span className="flex-1 truncate">{url}</span>
+                        <div key={index} className="flex items-center gap-2 text-xs bg-muted/50 p-1 rounded">
+                          <Link className="h-3 w-3 text-muted-foreground flex-shrink-0" />
+                          <span className="flex-1 truncate" title={url}>{url}</span>
                           <Button
                             onClick={() => removeCustomUrl(index)}
                             size="sm"
                             variant="ghost"
-                            className="h-6 w-6 p-0"
+                            className="h-5 w-5 p-0 hover:bg-destructive hover:text-destructive-foreground"
                           >
                             <Trash2 className="h-3 w-3" />
                           </Button>
@@ -714,12 +548,12 @@ Focus on providing authoritative, well-sourced information with proper academic 
                   {isResearching ? (
                     <>
                       <Brain className="mr-2 h-5 w-5 animate-spin" />
-                      Researching...
+                      Исследую...
                     </>
                   ) : (
                     <>
                       <Search className="mr-2 h-5 w-5" />
-                      Start Research
+                      Начать исследование
                     </>
                   )}
                 </Button>
@@ -731,7 +565,7 @@ Focus on providing authoritative, well-sourced information with proper academic 
                 <CardHeader>
                   <CardTitle className="text-xl font-light flex items-center gap-2">
                     <BarChart3 className="h-5 w-5" />
-                    Progress
+                    Прогресс
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -748,7 +582,7 @@ Focus on providing authoritative, well-sourced information with proper academic 
                         {totalReferences} refs
                       </Badge>
                       <Badge variant="outline" className="border-foreground text-foreground">
-                        Batch: {settings.batchSize}
+                        Батч: {settings.batchSize}
                       </Badge>
                     </div>
                   </div>
@@ -770,7 +604,7 @@ Focus on providing authoritative, well-sourced information with proper academic 
                 }`}
               >
                 <MessageSquare className="h-4 w-4 inline mr-2" />
-                Research Chat
+                Рассмотрение исследовательских данных
               </button>
               <button
                 onClick={() => setActiveTab('results')}
@@ -781,7 +615,7 @@ Focus on providing authoritative, well-sourced information with proper academic 
                 }`}
               >
                 <Search className="h-4 w-4 inline mr-2" />
-                Query Results ({results.length})
+                Результаты запросов ({results.length})
               </button>
               <button
                 onClick={() => setActiveTab('report')}
@@ -792,7 +626,7 @@ Focus on providing authoritative, well-sourced information with proper academic 
                 }`}
               >
                 <FileText className="h-4 w-4 inline mr-2" />
-                Final Report
+                Отчет
               </button>
             </div>
 
@@ -802,7 +636,7 @@ Focus on providing authoritative, well-sourced information with proper academic 
                 <CardHeader>
                   <CardTitle className="flex items-center gap-3 text-xl font-light">
                     <MessageSquare className="h-5 w-5" />
-                    Research Progress Chat
+                    Рассмотрение исследовательских данных
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -810,7 +644,7 @@ Focus on providing authoritative, well-sourced information with proper academic 
                     {chatMessages.length === 0 && (
                       <div className="text-center text-muted-foreground py-8">
                         <Brain className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                        <p className="font-light">Start a research session to see live progress</p>
+                        <p className="font-light">Начните исследовательский процесс для просмотра текущего прогресса</p>
                       </div>
                     )}
                     {chatMessages.map((message) => (
@@ -825,9 +659,9 @@ Focus on providing authoritative, well-sourced information with proper academic 
                         }`}
                       >
                         <div className="flex items-center gap-2 mb-1">
-                          {message.type === 'user' && <span className="font-medium">You</span>}
-                          {message.type === 'system' && <span className="font-medium">System</span>}
-                          {message.type === 'research' && <span className="font-medium">Research</span>}
+                          {message.type === 'user' && <span className="font-medium">Вы</span>}
+                          {message.type === 'system' && <span className="font-medium">Система</span>}
+                          {message.type === 'research' && <span className="font-medium">Исследование</span>}
                           <span className="text-xs opacity-70">
                             {message.timestamp.toLocaleTimeString()}
                           </span>
@@ -847,7 +681,7 @@ Focus on providing authoritative, well-sourced information with proper academic 
                   <CardTitle className="flex items-center justify-between">
                     <div className="flex items-center gap-3 text-xl font-light">
                       <Search className="h-5 w-5" />
-                      Query Results ({results.length})
+                      Результаты запросов ({results.length})
                     </div>
                     <Button
                       variant="outline"
@@ -856,7 +690,7 @@ Focus on providing authoritative, well-sourced information with proper academic 
                       className="border-foreground hover:bg-foreground hover:text-background transition-all duration-200"
                     >
                       {showQueries ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                      {showQueries ? ' Hide' : ' Show'} Details
+                      {showQueries ? ' Скрыть' : ' Показать'} Детали
                     </Button>
                   </CardTitle>
                 </CardHeader>
@@ -867,7 +701,7 @@ Focus on providing authoritative, well-sourced information with proper academic 
                         <div key={index} className="border border-muted rounded-lg p-4 hover:shadow-lg transition-all duration-300 animate-scale-in" style={{animationDelay: `${index * 50}ms`}}>
                           <div className="flex items-center gap-3 mb-3">
                             <Badge variant={result.status === 'completed' ? 'default' : result.status === 'error' ? 'destructive' : 'secondary'} className="font-light">
-                              Query {result.chatId}
+                              Запрос {result.chatId}
                             </Badge>
                             <span className="text-sm font-medium flex-1">{result.query}</span>
                           </div>
@@ -884,7 +718,7 @@ Focus on providing authoritative, well-sourced information with proper academic 
                           <div className="flex items-center gap-2">
                             <Badge variant="secondary" className="border border-muted font-light">
                               <Link className="h-3 w-3 mr-1" />
-                              {result.references.length} references
+                              {result.references.length} ссылок
                             </Badge>
                             <Badge variant="outline" className={`font-light ${result.status === 'completed' ? 'border-green-500 text-green-700' : result.status === 'error' ? 'border-red-500 text-red-700' : 'border-muted'}`}>
                               {result.status}
@@ -910,7 +744,7 @@ Focus on providing authoritative, well-sourced information with proper academic 
                   <CardTitle className="flex items-center justify-between">
                     <div className="flex items-center gap-3 text-xl font-light">
                       <FileText className="h-5 w-5" />
-                      Professional Research Report
+                      Профессиональный исследовательский отчет
                     </div>
                     <Button 
                       onClick={downloadReport} 
@@ -919,7 +753,7 @@ Focus on providing authoritative, well-sourced information with proper academic 
                       className="border-foreground hover:bg-foreground hover:text-background transition-all duration-200"
                     >
                       <Download className="h-4 w-4 mr-2" />
-                      Download Report
+                      Скачать отчет
                     </Button>
                   </CardTitle>
                 </CardHeader>
@@ -935,8 +769,8 @@ Focus on providing authoritative, well-sourced information with proper academic 
               <Card className="border-2 border-muted animate-fade-in">
                 <CardContent className="text-center py-12">
                   <FileText className="h-16 w-16 mx-auto mb-4 opacity-50" />
-                  <p className="text-muted-foreground font-light">No research report generated yet</p>
-                  <p className="text-sm text-muted-foreground font-light mt-2">Start a research session to generate a comprehensive professional report</p>
+                  <p className="text-muted-foreground font-light">Пока что отчет не сгенерирован</p>
+                  <p className="text-sm text-muted-foreground font-light mt-2">Начните исследовательский процесс для генерации профессионального отчета</p>
                 </CardContent>
               </Card>
             )}
