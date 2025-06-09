@@ -9,14 +9,10 @@ export const callGeminiAPI = async (
   const apiKey = 'AIzaSyDVU5wpZ95BLryznNdrrVXZgROhbTw2_Ac';
   
   try {
+    // Правильная структура для Google Search grounding
     const tools = settings?.useGrounding ? [
       {
-        googleSearch: {
-          dynamicRetrievalConfig: {
-            mode: "MODE_DYNAMIC",
-            dynamicThreshold: 0.7
-          }
-        }
+        googleSearch: {}
       }
     ] : undefined;
 
@@ -57,9 +53,17 @@ export const callGeminiAPI = async (
       }
     };
 
+    // Добавляем инструменты только если grounding включен
     if (tools) {
       requestBody.tools = tools;
     }
+
+    console.log('Отправка запроса к Gemini API:', {
+      query,
+      chatId,
+      useGrounding: settings?.useGrounding,
+      requestBody: JSON.stringify(requestBody, null, 2)
+    });
 
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`, {
       method: 'POST',
@@ -71,10 +75,17 @@ export const callGeminiAPI = async (
 
     if (!response.ok) {
       const errorText = await response.text();
+      console.error(`API Error для запроса ${chatId}:`, errorText);
       throw new Error(`API Error: ${errorText}`);
     }
 
     const data = await response.json();
+    console.log('Получен ответ от Gemini API:', {
+      chatId,
+      hasData: !!data,
+      hasCandidates: !!data.candidates,
+      candidatesLength: data.candidates?.length || 0
+    });
     
     if (!data.candidates || !data.candidates[0] || !data.candidates[0].content) {
       throw new Error('Нет данных в ответе API');
@@ -82,6 +93,12 @@ export const callGeminiAPI = async (
 
     const responseText = data.candidates[0].content.parts[0].text;
     const references = extractReferences(responseText, settings?.customUrls || []);
+
+    console.log('Обработка завершена:', {
+      chatId,
+      responseLength: responseText.length,
+      referencesCount: references.length
+    });
 
     return {
       query,
