@@ -120,6 +120,7 @@ const ResearchSettings: React.FC<ResearchSettingsProps> = ({
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
+              <SelectItem value="gemini-2.5-flash-preview-05-20">Gemini 2.5 Flash Preview (Веб-поиск)</SelectItem>
               <SelectItem value="gemini-2.0-flash">Gemini 2.0 Flash (Веб-поиск)</SelectItem>
               <SelectItem value="gemini-2.0-flash-exp">Gemini 2.0 Flash Exp (Веб-поиск)</SelectItem>
               <SelectItem value="gemini-1.5-pro">Gemini 1.5 Pro (Веб-поиск)</SelectItem>

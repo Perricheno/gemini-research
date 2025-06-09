@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Search, Brain, FileText, Download, Eye, EyeOff, MessageSquare } from 'lucide-react';
 import { toast } from 'sonner';
@@ -16,9 +17,9 @@ const DeepResearchApp = () => {
   const [topic, setTopic] = useState('');
   const [settings, setSettings] = useState<ResearchSettings>({
     tone: 'phd',
-    wordCount: 10000,
+    wordCount: 50000,
     parallelQueries: 50,
-    model: 'gemini-2.0-flash',
+    model: 'gemini-2.5-flash-preview-05-20',
     useGrounding: true,
     customUrls: [],
     searchDepth: 'deep',
@@ -37,6 +38,7 @@ const DeepResearchApp = () => {
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [activeTab, setActiveTab] = useState<'chat' | 'results' | 'models' | 'report'>('chat');
   const [modelReports, setModelReports] = useState<ModelReport[]>([]);
+  const [allReferences, setAllReferences] = useState<Reference[]>([]);
 
   const addChatMessage = (type: ChatMessage['type'], content: string, metadata?: any) => {
     const message: ChatMessage = {
@@ -62,11 +64,12 @@ const DeepResearchApp = () => {
     setTotalReferences(0);
     setCompletedQueries(0);
     setModelReports([]);
+    setAllReferences([]);
     setActiveTab('results');
 
     addChatMessage('user', `Начинаем мощное веб-исследование по теме: ${topic}`);
     addChatMessage('system', `Инициализируем ${settings.parallelQueries} параллельных веб-запросов с принудительным grounding...`);
-    addChatMessage('system', `Настройки: максимальные лимиты, температура 0.1, принудительный веб-поиск, НЕ используем внутренние базы знаний`);
+    addChatMessage('system', `Настройки: максимальные лимиты, температура 1.0, принудительный веб-поиск, НЕ используем внутренние базы знаний`);
 
     try {
       setCurrentStep('Генерация целевых веб-поисковых запросов...');
@@ -86,6 +89,7 @@ const DeepResearchApp = () => {
       addChatMessage('system', `Сгенерировано ${queries.length} веб-поисковых запросов. Начинаем параллельное выполнение...`);
       
       const allResults: ResearchResult[] = [];
+      const collectedReferences: Reference[] = [];
       
       for (let i = 0; i < queries.length; i += settings.batchSize) {
         const batch = queries.slice(i, i + settings.batchSize);
@@ -105,6 +109,7 @@ const DeepResearchApp = () => {
           batchResults.forEach((result, index) => {
             if (result.status === 'fulfilled') {
               allResults.push(result.value);
+              collectedReferences.push(...result.value.references);
               setCompletedQueries(prev => prev + 1);
               
               setResults(prev => prev.map(r => 
@@ -146,13 +151,14 @@ const DeepResearchApp = () => {
 
       const totalRefs = allResults.reduce((sum, result) => sum + result.references.length, 0);
       setTotalReferences(totalRefs);
+      setAllReferences(collectedReferences);
       
       addChatMessage('system', `Веб-исследование завершено! Обработано ${allResults.length} запросов, найдено ${totalRefs} веб-источников.`);
       
-      setCurrentStep('Генерация согласованного отчета 5 моделями Gemini 2.5 Flash Preview...');
+      setCurrentStep('Генерация согласованного отчета 10 моделями Gemini 2.5 Flash Preview (последовательно)...');
       setProgress(65);
       
-      await generateMultiModelReport(allResults);
+      await generateSequentialModelReport(allResults, collectedReferences);
       
     } catch (error) {
       console.error('Веб-исследование завершено с ошибкой:', error);
@@ -165,20 +171,15 @@ const DeepResearchApp = () => {
     }
   };
 
-  const generateMultiModelReport = async (results: ResearchResult[]) => {
+  const generateSequentialModelReport = async (results: ResearchResult[], allRefs: Reference[]) => {
     const successfulResults = results.filter(r => r.status === 'completed');
     const combinedData = successfulResults.map(r => r.response).join('\n\n');
     
-    addChatMessage('system', 'Запуск 5 моделей Gemini 2.5 Flash Preview для согласованной генерации отчета...');
+    addChatMessage('system', 'Запуск 10 моделей Gemini 2.5 Flash Preview для последовательной генерации согласованного отчета...');
     setActiveTab('report');
 
-    const models = [
-      'gemini-2.0-flash-exp',
-      'gemini-2.0-flash-exp',
-      'gemini-2.0-flash-exp',
-      'gemini-2.0-flash-exp',
-      'gemini-2.0-flash-exp'
-    ];
+    const modelName = 'gemini-2.5-flash-preview-05-20';
+    const totalModels = 10;
 
     const toneInstructions = {
       phd: 'Напишите в академическом, научном тоне высшего уровня с продвинутой терминологией и глубоким анализом.',
@@ -186,9 +187,9 @@ const DeepResearchApp = () => {
       school: 'Напишите в понятном для студентов тоне, объясняя сложные концепции простым языком.'
     };
 
-    const initialReports: ModelReport[] = models.map((model, index) => ({
+    const initialReports: ModelReport[] = Array.from({ length: totalModels }, (_, index) => ({
       id: `model-${index + 1}`,
-      model: model,
+      model: modelName,
       content: '',
       status: 'pending',
       timestamp: new Date(),
@@ -197,33 +198,55 @@ const DeepResearchApp = () => {
     
     setModelReports(initialReports);
 
-    const reportPromises = models.map(async (model, index) => {
-      const modelNumber = index + 1;
-      addChatMessage('system', `Модель ${modelNumber}/5 (${model}) начинает генерацию части отчета...`);
-      
-      const sectionPrompt = `На основе веб-исследовательских данных, напишите часть ${modelNumber} из 5 согласованного профессионального отчета по теме "${topic}".
+    const modelResponses: string[] = [];
 
-ДАННЫЕ ИЗ ВЕБ-ПОИСКА: ${combinedData.substring(index * 10000, (index + 1) * 10000)}
+    // Последовательная генерация отчетов
+    for (let i = 0; i < totalModels; i++) {
+      const modelNumber = i + 1;
+      addChatMessage('system', `Модель ${modelNumber}/${totalModels} начинает генерацию части отчета...`);
+      
+      const previousContent = modelResponses.join('\n\n---\n\n');
+      
+      const sectionPrompt = `На основе веб-исследовательских данных, напишите часть ${modelNumber} из ${totalModels} согласованного профессионального отчета по теме "${topic}".
+
+ДАННЫЕ ИЗ ВЕБ-ПОИСКА: ${combinedData}
+
+${previousContent ? `ПРЕДЫДУЩИЕ ЧАСТИ ОТЧЕТА: ${previousContent}` : ''}
 
 ТРЕБОВАНИЯ:
 - ${toneInstructions[settings.tone]}
-- Целевая длина: приблизительно ${Math.floor(settings.wordCount / 5)} слов для этой части
+- Целевая длина: приблизительно ${Math.floor(settings.wordCount / totalModels)} слов для этой части
 - Используйте ТОЛЬКО данные из веб-поиска выше
 - Включите конкретную статистику, факты, цифры из найденных источников
 - Структурируйте профессионально с заголовками
 - Цитируйте веб-источники в формате [Источник: Название | Автор | Дата | URL]
-${index === 0 ? '- Начните с executive summary и introduction' : ''}
-${index === models.length - 1 ? '- Закончите с conclusions и recommendations' : ''}
+- Обеспечьте логическую связность с предыдущими частями
+- НЕ повторяйте информацию из предыдущих частей
+${modelNumber === 1 ? '- Начните с executive summary и introduction' : ''}
+${modelNumber === totalModels ? '- Закончите с conclusions и recommendations' : ''}
 
-Фокус части ${modelNumber}: ${index === 0 ? 'Введение и обзор' : index === 1 ? 'Текущее состояние' : index === 2 ? 'Анализ и тренды' : index === 3 ? 'Практические применения' : 'Выводы и будущее'}`;
+Фокус части ${modelNumber}: ${
+  modelNumber === 1 ? 'Введение и executive summary' :
+  modelNumber === 2 ? 'Текущее состояние и обзор рынка' :
+  modelNumber === 3 ? 'Анализ тенденций и технологий' :
+  modelNumber === 4 ? 'Практические применения и кейсы' :
+  modelNumber === 5 ? 'Экономическое воздействие' :
+  modelNumber === 6 ? 'Социальное влияние и образование' :
+  modelNumber === 7 ? 'Регулятивная среда и политика' :
+  modelNumber === 8 ? 'Международное сотрудничество' :
+  modelNumber === 9 ? 'Вызовы и препятствия' :
+  'Выводы и будущие перспективы'
+}`;
 
       try {
-        const response = await callGeminiAPI(sectionPrompt, 2000 + index, settings, model, 65536);
+        const response = await callGeminiAPI(sectionPrompt, 3000 + i, settings, modelName, 65536);
         const wordCount = response.response.split(' ').length;
         
+        modelResponses.push(response.response);
+        
         const completedReport: ModelReport = {
-          id: `model-${index + 1}`,
-          model: model,
+          id: `model-${i + 1}`,
+          model: modelName,
           content: response.response,
           status: 'completed',
           timestamp: new Date(),
@@ -234,16 +257,18 @@ ${index === models.length - 1 ? '- Закончите с conclusions и recommen
           r.id === completedReport.id ? completedReport : r
         ));
 
-        addChatMessage('model-response', `Модель ${modelNumber}/5 завершила генерацию: ${wordCount.toLocaleString()} слов`);
-        setProgress(65 + (index + 1) / models.length * 30);
+        addChatMessage('model-response', `Модель ${modelNumber}/${totalModels} завершила генерацию: ${wordCount.toLocaleString()} слов`);
+        setProgress(65 + (i + 1) / totalModels * 30);
         
-        return response.response;
+        // Пауза между моделями для лучшей согласованности
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
       } catch (error) {
         console.error(`Ошибка модели ${modelNumber}:`, error);
         
         const errorReport: ModelReport = {
-          id: `model-${index + 1}`,
-          model: model,
+          id: `model-${i + 1}`,
+          model: modelName,
           content: `Ошибка генерации: ${error.message}`,
           status: 'error',
           timestamp: new Date(),
@@ -254,17 +279,19 @@ ${index === models.length - 1 ? '- Закончите с conclusions и recommen
           r.id === errorReport.id ? errorReport : r
         ));
 
-        addChatMessage('system', `Модель ${modelNumber}/5 завершена с ошибкой: ${error.message}`);
-        return '';
+        addChatMessage('system', `Модель ${modelNumber}/${totalModels} завершена с ошибкой: ${error.message}`);
       }
-    });
+    }
 
-    const modelResponses = await Promise.all(reportPromises);
-    const finalReport = modelResponses.filter(response => response).join('\n\n---\n\n');
+    // Сборка финального отчета с ссылками
+    const finalReportContent = modelResponses.filter(response => response).join('\n\n---\n\n');
+    const uniqueUrls = [...new Set(allRefs.map(ref => ref.url))];
+    const referencesSection = '\n\n## Источники\n\n' + uniqueUrls.map((url, index) => `${index + 1}. ${url}`).join('\n');
+    const finalReportWithRefs = finalReportContent + referencesSection;
     
-    setFinalReport(finalReport);
-    addChatMessage('system', `Согласованный отчет от 5 моделей сгенерирован! Общая длина: ${finalReport.length} символов.`);
-    toast.success('Многомодельный профессиональный отчет готов!');
+    setFinalReport(finalReportWithRefs);
+    addChatMessage('system', `Согласованный отчет от ${totalModels} моделей сгенерирован последовательно! Общая длина: ${finalReportWithRefs.length} символов. Добавлено ${uniqueUrls.length} уникальных источников.`);
+    toast.success('Многомодельный профессиональный отчет готов с полным списком источников!');
   };
 
   const downloadReport = () => {
@@ -288,7 +315,7 @@ ${index === models.length - 1 ? '- Закончите с conclusions и recommen
           </h1>
           <div className="w-32 h-0.5 bg-foreground mx-auto mb-4"></div>
           <p className="text-muted-foreground text-lg font-light">
-            Powered by 5x Gemini 2.5 Flash Preview + Forced Web Grounding | Maximum Limits
+            Powered by 10x Gemini 2.5 Flash Preview + Forced Web Grounding | Sequential Generation
           </p>
         </div>
 

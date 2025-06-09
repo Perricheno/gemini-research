@@ -48,8 +48,7 @@ export const callGeminiAPI = async (
       ],
       tools: tools, // Always include grounding
       generationConfig: {
-        temperature: 0.1, // Максимально фактический подход
-        topK: 40,
+        temperature: 1.0, // Максимальная креативность
         topP: 0.95,
         maxOutputTokens: maxOutputTokens
       }
