@@ -11,45 +11,9 @@ import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
 import { Search, Brain, FileText, Download, Settings, Eye, EyeOff, MessageSquare, Zap, Clock, BarChart3, Globe, Link, Plus, Trash2, Upload } from 'lucide-react';
 import { toast } from 'sonner';
-
-interface ResearchResult {
-  query: string;
-  response: string;
-  references: Reference[];
-  chatId: number;
-  status: 'pending' | 'completed' | 'error';
-  timestamp: Date;
-}
-
-interface Reference {
-  url: string;
-  title: string;
-  author?: string;
-  publishDate?: string;
-  description?: string;
-  domain: string;
-}
-
-interface ResearchSettings {
-  tone: 'phd' | 'bachelor' | 'school';
-  wordCount: number;
-  parallelQueries: number;
-  model: string;
-  useGrounding: boolean;
-  customUrls: string[];
-  searchDepth: 'shallow' | 'medium' | 'deep';
-  includeRecent: boolean;
-  language: string;
-  batchSize: number;
-}
-
-interface ChatMessage {
-  id: string;
-  type: 'user' | 'system' | 'research';
-  content: string;
-  timestamp: Date;
-  metadata?: any;
-}
+import { ResearchResult, Reference, ResearchSettings, ChatMessage } from '../types/research';
+import { generateResearchQueries } from '../utils/researchUtils';
+import { callGeminiAPI } from '../utils/geminiApi';
 
 const DeepResearchApp = () => {
   const [topic, setTopic] = useState('');
@@ -184,7 +148,7 @@ const DeepResearchApp = () => {
         addChatMessage('system', `Обработка батча ${batchNumber}/${totalBatches}...`);
         
         const batchPromises = batch.map((query, index) => 
-          callGeminiAPI(query, i + index + 1)
+          callGeminiAPI(query, i + index + 1, settings)
         );
         
         try {
@@ -225,7 +189,6 @@ const DeepResearchApp = () => {
           
           setProgress(((i + settings.batchSize) / queries.length) * 70);
           
-          // Уменьшенная задержка для улучшения производительности с более высокими ограничениями
           await new Promise(resolve => setTimeout(resolve, 1000));
         } catch (error) {
           console.error('Батчная ошибка:', error);
@@ -296,7 +259,7 @@ const DeepResearchApp = () => {
       `;
 
       try {
-        const sectionResponse = await callGeminiAPI(sectionPrompt, 1000 + i);
+        const sectionResponse = await callGeminiAPI(sectionPrompt, 1000 + i, settings);
         fullReport += sectionResponse.response + '\n\n';
         
         setProgress(75 + (i + 1) / chunks * 20);
