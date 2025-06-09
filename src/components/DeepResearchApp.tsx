@@ -9,16 +9,26 @@ import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Search, Brain, FileText, Download, Settings, Eye, EyeOff, MessageSquare, Zap, Clock, BarChart3 } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { Search, Brain, FileText, Download, Settings, Eye, EyeOff, MessageSquare, Zap, Clock, BarChart3, Globe, Link, Plus, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface ResearchResult {
   query: string;
   response: string;
-  references: string[];
+  references: Reference[];
   chatId: number;
   status: 'pending' | 'completed' | 'error';
   timestamp: Date;
+}
+
+interface Reference {
+  url: string;
+  title: string;
+  author?: string;
+  publishDate?: string;
+  description?: string;
+  domain: string;
 }
 
 interface ResearchSettings {
@@ -26,6 +36,12 @@ interface ResearchSettings {
   wordCount: number;
   parallelQueries: number;
   model: string;
+  useGrounding: boolean;
+  customUrls: string[];
+  searchDepth: 'shallow' | 'medium' | 'deep';
+  includeRecent: boolean;
+  language: string;
+  batchSize: number;
 }
 
 interface ChatMessage {
@@ -41,9 +57,15 @@ const DeepResearchApp = () => {
   const apiKey = 'AIzaSyDVU5wpZ95BLryznNdrrVXZgROhbTw2_Ac';
   const [settings, setSettings] = useState<ResearchSettings>({
     tone: 'phd',
-    wordCount: 5000,
-    parallelQueries: 20,
-    model: 'gemini-2.0-flash'
+    wordCount: 10000,
+    parallelQueries: 50,
+    model: 'gemini-2.0-flash',
+    useGrounding: true,
+    customUrls: [],
+    searchDepth: 'deep',
+    includeRecent: true,
+    language: 'en',
+    batchSize: 10
   });
   
   const [isResearching, setIsResearching] = useState(false);
@@ -56,6 +78,7 @@ const DeepResearchApp = () => {
   const [completedQueries, setCompletedQueries] = useState(0);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [activeTab, setActiveTab] = useState<'chat' | 'results' | 'report'>('chat');
+  const [newUrl, setNewUrl] = useState('');
 
   const addChatMessage = (type: ChatMessage['type'], content: string, metadata?: any) => {
     const message: ChatMessage = {
@@ -68,86 +91,149 @@ const DeepResearchApp = () => {
     setChatMessages(prev => [...prev, message]);
   };
 
+  const addCustomUrl = () => {
+    if (newUrl.trim() && !settings.customUrls.includes(newUrl.trim())) {
+      setSettings(prev => ({
+        ...prev,
+        customUrls: [...prev.customUrls, newUrl.trim()]
+      }));
+      setNewUrl('');
+      toast.success('URL added to research context');
+    }
+  };
+
+  const removeCustomUrl = (index: number) => {
+    setSettings(prev => ({
+      ...prev,
+      customUrls: prev.customUrls.filter((_, i) => i !== index)
+    }));
+  };
+
   const generateResearchQueries = (topic: string, count: number): string[] => {
     const baseQueries = [
-      `${topic} latest research 2024`,
-      `${topic} scientific studies`,
-      `${topic} market analysis`,
-      `${topic} case studies`,
-      `${topic} best practices`,
-      `${topic} industry trends`,
-      `${topic} expert opinions`,
-      `${topic} statistical data`,
-      `${topic} future predictions`,
-      `${topic} comparative analysis`,
-      `${topic} methodology`,
+      `${topic} latest research 2024 2025`,
+      `${topic} scientific studies peer reviewed`,
+      `${topic} market analysis comprehensive report`,
+      `${topic} case studies real world applications`,
+      `${topic} best practices industry standards`,
+      `${topic} future trends predictions`,
+      `${topic} expert opinions thought leaders`,
+      `${topic} statistical data analytics`,
+      `${topic} comparative analysis benchmarks`,
+      `${topic} methodology frameworks`,
       `${topic} implementation strategies`,
-      `${topic} challenges and solutions`,
-      `${topic} global perspective`,
-      `${topic} technological aspects`,
-      `${topic} economic impact`,
-      `${topic} social implications`,
-      `${topic} environmental factors`,
-      `${topic} regulatory framework`,
-      `${topic} innovation in ${topic}`
+      `${topic} challenges solutions innovation`,
+      `${topic} global perspective international`,
+      `${topic} technological advancement breakthrough`,
+      `${topic} economic impact financial analysis`,
+      `${topic} social implications societal effects`,
+      `${topic} environmental sustainability impact`,
+      `${topic} regulatory framework policy`,
+      `${topic} innovation disruption emerging`,
+      `${topic} academic research university studies`,
+      `${topic} industry reports white papers`,
+      `${topic} success stories failure analysis`,
+      `${topic} regional differences cultural`,
+      `${topic} historical evolution timeline`,
+      `${topic} cross-disciplinary applications`,
+      `${topic} data-driven insights evidence`,
+      `${topic} professional development career`,
+      `${topic} competitive landscape analysis`,
+      `${topic} risk assessment mitigation`,
+      `${topic} performance metrics KPIs`
     ];
 
-    const extendedQueries = [];
+    const advancedQueries = [
+      `advanced ${topic} methodologies`,
+      `${topic} machine learning AI applications`,
+      `${topic} blockchain cryptocurrency integration`,
+      `${topic} Internet of Things IoT`,
+      `${topic} sustainability green technology`,
+      `${topic} cybersecurity privacy concerns`,
+      `${topic} cloud computing scalability`,
+      `${topic} automation efficiency optimization`,
+      `${topic} big data analytics insights`,
+      `${topic} mobile technology applications`,
+      `${topic} artificial intelligence enhancement`,
+      `${topic} virtual reality augmented reality`,
+      `${topic} quantum computing potential`,
+      `${topic} 5G technology implementation`,
+      `${topic} digital transformation strategy`
+    ];
+
+    const extendedQueries = [...baseQueries, ...advancedQueries];
+    const finalQueries = [];
+    
     for (let i = 0; i < count; i++) {
-      if (i < baseQueries.length) {
-        extendedQueries.push(baseQueries[i]);
+      if (i < extendedQueries.length) {
+        finalQueries.push(extendedQueries[i]);
       } else {
         const variations = [
-          `advanced ${topic} research`,
-          `${topic} in different industries`,
-          `${topic} success stories`,
-          `${topic} failure analysis`,
-          `${topic} regional differences`,
-          `${topic} historical evolution`,
-          `${topic} cross-cultural perspectives`,
-          `${topic} interdisciplinary approaches`
+          `comprehensive ${topic} analysis`,
+          `emerging ${topic} technologies`,
+          `${topic} market opportunities`,
+          `${topic} strategic planning`,
+          `${topic} performance optimization`,
+          `${topic} cost benefit analysis`,
+          `${topic} stakeholder perspectives`,
+          `${topic} quality assurance standards`
         ];
-        extendedQueries.push(variations[i % variations.length] + ` ${Math.floor(i / variations.length) + 1}`);
+        finalQueries.push(variations[i % variations.length] + ` variant ${Math.floor(i / variations.length) + 1}`);
       }
     }
     
-    return extendedQueries;
+    return finalQueries;
   };
 
   const callGeminiAPI = async (query: string, chatId: number): Promise<ResearchResult> => {
     console.log(`Starting query ${chatId}: ${query}`);
     
     try {
+      const requestBody: any = {
+        contents: [{
+          parts: [{
+            text: `Conduct comprehensive research and analysis on: "${query}". 
+
+Please provide:
+1. Detailed analysis with specific data, statistics, and numerical evidence
+2. Recent developments and current trends (2024-2025)
+3. Key findings, insights, and expert opinions
+4. Credible sources with proper citations
+5. Real-world case studies and examples
+6. Future implications and recommendations
+
+Focus on providing authoritative, well-sourced information with proper academic citations.`
+          }]
+        }],
+        generationConfig: {
+          temperature: 0.3,
+          topK: 40,
+          topP: 0.9,
+          maxOutputTokens: 8192,
+        }
+      };
+
+      if (settings.useGrounding) {
+        requestBody.tools = [{
+          googleSearch: {
+            dynamicRetrievalConfig: {
+              mode: "MODE_DYNAMIC",
+              dynamicThreshold: 0.7
+            }
+          }
+        }];
+
+        if (settings.customUrls.length > 0) {
+          requestBody.contents[0].parts[0].text += `\n\nPrioritize information from these specific sources: ${settings.customUrls.join(', ')}`;
+        }
+      }
+
       const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${settings.model}:generateContent?key=${apiKey}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          contents: [{
-            parts: [{
-              text: `Research and analyze the following topic using current internet data: "${query}". 
-
-Please provide:
-1. Comprehensive analysis with specific data and statistics
-2. Recent developments and trends (2023-2024)
-3. Key findings and insights
-4. Sources and references
-5. Expert opinions and case studies
-
-Search for the most recent and credible information available.`
-            }]
-          }],
-          generationConfig: {
-            temperature: 0.7,
-            topK: 40,
-            topP: 0.9,
-            maxOutputTokens: 2048,
-          },
-          tools: [{
-            googleSearch: {}
-          }]
-        }),
+        body: JSON.stringify(requestBody),
       });
 
       if (!response.ok) {
@@ -184,26 +270,65 @@ Search for the most recent and credible information available.`
     }
   };
 
-  const extractReferences = (text: string): string[] => {
-    const urlRegex = /https?:\/\/[^\s]+/g;
+  const extractReferences = (text: string): Reference[] => {
+    const references: Reference[] = [];
+    
+    // Extract URLs with better pattern matching
+    const urlRegex = /https?:\/\/(?:www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b(?:[-a-zA-Z0-9()@:%_\+.~#?&=]*)/g;
     const urls = text.match(urlRegex) || [];
     
-    const citationPatterns = [
-      /\[(\d+)\]/g,
-      /\(([^)]+\d{4}[^)]*)\)/g,
-      /Source: ([^\n]+)/gi,
-      /Reference: ([^\n]+)/gi
-    ];
-    
-    const citations: string[] = [];
-    citationPatterns.forEach(pattern => {
-      const matches = text.match(pattern);
-      if (matches) {
-        citations.push(...matches);
+    urls.forEach(url => {
+      try {
+        const urlObj = new URL(url);
+        const domain = urlObj.hostname.replace('www.', '');
+        
+        // Extract title from surrounding text
+        const urlIndex = text.indexOf(url);
+        const contextBefore = text.substring(Math.max(0, urlIndex - 200), urlIndex);
+        const contextAfter = text.substring(urlIndex + url.length, Math.min(text.length, urlIndex + url.length + 200));
+        
+        // Simple title extraction logic
+        let title = url;
+        const titleMatch = contextBefore.match(/["']([^"']{10,100})["']/);
+        if (titleMatch) {
+          title = titleMatch[1];
+        }
+        
+        references.push({
+          url,
+          title,
+          domain,
+          description: contextAfter.split('.')[0] || ''
+        });
+      } catch (e) {
+        // Invalid URL, skip
       }
     });
     
-    return [...urls, ...citations];
+    // Extract citation patterns
+    const citationPatterns = [
+      /\(([^)]+\d{4}[^)]*)\)/g,
+      /\[(\d+)\]\s*([^\n]{20,100})/g,
+      /Source:\s*([^\n]{10,150})/gi,
+      /Reference:\s*([^\n]{10,150})/gi,
+      /According to\s+([^\n]{10,100})/gi
+    ];
+    
+    citationPatterns.forEach(pattern => {
+      const matches = [...text.matchAll(pattern)];
+      matches.forEach(match => {
+        if (match[1]) {
+          references.push({
+            url: '#citation',
+            title: match[1].trim(),
+            domain: 'citation',
+            description: match[2] ? match[2].trim() : ''
+          });
+        }
+      });
+    });
+    
+    return references;
   };
 
   const conductParallelResearch = async () => {
@@ -222,9 +347,10 @@ Search for the most recent and credible information available.`
 
     addChatMessage('user', `Starting deep research on: ${topic}`);
     addChatMessage('system', `Initializing ${settings.parallelQueries} parallel queries with ${settings.model} model...`);
+    addChatMessage('system', `Research settings: ${settings.searchDepth} search, grounding ${settings.useGrounding ? 'enabled' : 'disabled'}, batch size: ${settings.batchSize}`);
 
     try {
-      setCurrentStep('Generating research queries...');
+      setCurrentStep('Generating comprehensive research queries...');
       const queries = generateResearchQueries(topic, settings.parallelQueries);
       
       const initialResults: ResearchResult[] = queries.map((query, index) => ({
@@ -238,14 +364,17 @@ Search for the most recent and credible information available.`
       setResults(initialResults);
       
       setCurrentStep(`Executing ${queries.length} parallel research queries...`);
-      addChatMessage('system', `Generated ${queries.length} research queries. Starting parallel execution...`);
+      addChatMessage('system', `Generated ${queries.length} research queries. Starting parallel execution with batches of ${settings.batchSize}...`);
       
-      const batchSize = 2; // Reduced to avoid quota issues
       const allResults: ResearchResult[] = [];
       
-      for (let i = 0; i < queries.length; i += batchSize) {
-        const batch = queries.slice(i, i + batchSize);
-        console.log(`Processing batch ${Math.floor(i / batchSize) + 1}/${Math.ceil(queries.length / batchSize)}`);
+      for (let i = 0; i < queries.length; i += settings.batchSize) {
+        const batch = queries.slice(i, i + settings.batchSize);
+        const batchNumber = Math.floor(i / settings.batchSize) + 1;
+        const totalBatches = Math.ceil(queries.length / settings.batchSize);
+        
+        console.log(`Processing batch ${batchNumber}/${totalBatches} (${batch.length} queries)`);
+        addChatMessage('system', `Processing batch ${batchNumber}/${totalBatches}...`);
         
         const batchPromises = batch.map((query, index) => 
           callGeminiAPI(query, i + index + 1)
@@ -287,9 +416,10 @@ Search for the most recent and credible information available.`
             }
           });
           
-          setProgress(((i + batchSize) / queries.length) * 70);
+          setProgress(((i + settings.batchSize) / queries.length) * 70);
           
-          await new Promise(resolve => setTimeout(resolve, 5000)); // Increased delay
+          // Reduced delay for better performance with higher limits
+          await new Promise(resolve => setTimeout(resolve, 1000));
         } catch (error) {
           console.error('Batch error:', error);
           addChatMessage('system', `Batch processing error: ${error.message}`);
@@ -326,12 +456,12 @@ Search for the most recent and credible information available.`
     setActiveTab('report');
 
     const toneInstructions = {
-      phd: 'Write in an academic, scholarly tone suitable for PhD-level research. Use sophisticated vocabulary, complex sentence structures, and rigorous analytical approach.',
-      bachelor: 'Write in a clear, academic tone suitable for undergraduate level. Balance accessibility with academic rigor.',
-      school: 'Write in a clear, simple language suitable for high school students. Avoid jargon and explain complex concepts simply.'
+      phd: 'Write in an academic, scholarly tone suitable for PhD-level research. Use sophisticated vocabulary, complex sentence structures, rigorous analytical approach, and extensive citations.',
+      bachelor: 'Write in a clear, academic tone suitable for undergraduate level. Balance accessibility with academic rigor, include proper citations and structured analysis.',
+      school: 'Write in clear, accessible language suitable for high school students. Explain complex concepts simply while maintaining factual accuracy.'
     };
 
-    const wordsPerChunk = Math.min(2000, Math.floor(settings.wordCount / 3));
+    const wordsPerChunk = Math.min(3000, Math.floor(settings.wordCount / 4));
     const chunks = Math.ceil(settings.wordCount / wordsPerChunk);
     
     let fullReport = '';
@@ -341,18 +471,21 @@ Search for the most recent and credible information available.`
       addChatMessage('system', `Writing section ${i + 1} of ${chunks}...`);
       
       const sectionPrompt = `
-        Based on the research data provided, write section ${i + 1} of ${chunks} of a comprehensive research report on "${topic}".
+        Based on the comprehensive research data provided, write section ${i + 1} of ${chunks} of a professional research report on "${topic}".
         
-        Research data: ${combinedData.substring(i * 3000, (i + 1) * 3000)}
+        Research data: ${combinedData.substring(i * 5000, (i + 1) * 5000)}
         
         Requirements:
         - ${toneInstructions[settings.tone]}
         - Target length: approximately ${wordsPerChunk} words for this section
-        - Include specific data, statistics, and examples from the research
-        - Maintain academic structure with clear headings and subheadings
-        - Reference the sources appropriately
-        ${i === 0 ? '- Start with an executive summary and introduction' : ''}
-        ${i === chunks - 1 ? '- End with conclusions and recommendations' : ''}
+        - Include specific data, statistics, quantitative evidence, and examples from the research
+        - Maintain professional academic structure with clear headings and subheadings
+        - Reference sources appropriately with proper citations
+        - Use evidence-based analysis and draw meaningful conclusions
+        ${i === 0 ? '- Start with executive summary, introduction, and methodology' : ''}
+        ${i === chunks - 1 ? '- End with conclusions, recommendations, and future research directions' : ''}
+        
+        Structure this section professionally with clear logical flow and authoritative presentation.
       `;
 
       try {
@@ -366,15 +499,36 @@ Search for the most recent and credible information available.`
       }
     }
     
-    const uniqueReferences = [...new Set(allReferences)];
-    fullReport += '\n\n## References\n\n';
-    uniqueReferences.forEach((ref, index) => {
-      fullReport += `${index + 1}. ${ref}\n`;
+    // Process and deduplicate references
+    const uniqueReferences = new Map<string, Reference>();
+    allReferences.forEach(ref => {
+      const key = ref.url + ref.title;
+      if (!uniqueReferences.has(key)) {
+        uniqueReferences.set(key, ref);
+      }
+    });
+    
+    fullReport += '\n\n## References and Sources\n\n';
+    Array.from(uniqueReferences.values()).forEach((ref, index) => {
+      fullReport += `${index + 1}. **${ref.title}**\n`;
+      if (ref.url !== '#citation') {
+        fullReport += `   URL: ${ref.url}\n`;
+      }
+      if (ref.author) {
+        fullReport += `   Author: ${ref.author}\n`;
+      }
+      if (ref.publishDate) {
+        fullReport += `   Published: ${ref.publishDate}\n`;
+      }
+      if (ref.description) {
+        fullReport += `   Description: ${ref.description}\n`;
+      }
+      fullReport += `   Domain: ${ref.domain}\n\n`;
     });
     
     setFinalReport(fullReport);
-    addChatMessage('system', `Research report completed! ${fullReport.length} characters, ${uniqueReferences.length} unique references.`);
-    toast.success('Research report generated successfully!');
+    addChatMessage('system', `Professional research report completed! ${fullReport.length} characters, ${uniqueReferences.size} unique references.`);
+    toast.success('Professional research report generated successfully!');
   };
 
   const downloadReport = () => {
@@ -382,10 +536,10 @@ Search for the most recent and credible information available.`
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `research-report-${topic.replace(/\s+/g, '-')}.txt`;
+    a.download = `professional-research-${topic.replace(/\s+/g, '-')}-${new Date().toISOString().split('T')[0]}.txt`;
     a.click();
     URL.revokeObjectURL(url);
-    addChatMessage('system', 'Report downloaded successfully!');
+    addChatMessage('system', 'Professional research report downloaded successfully!');
     toast.success('Report downloaded successfully!');
   };
 
@@ -394,11 +548,11 @@ Search for the most recent and credible information available.`
       <div className="container mx-auto p-6 max-w-7xl">
         <div className="text-center mb-8 animate-fade-in">
           <h1 className="text-6xl font-light mb-4 tracking-wide">
-            Deep Research AI
+            Professional Research AI
           </h1>
           <div className="w-32 h-0.5 bg-foreground mx-auto mb-4"></div>
           <p className="text-muted-foreground text-lg font-light">
-            Powered by Gemini 2.0 Flash + Grounding with parallel processing
+            Advanced Research with Gemini 2.0 Flash + Grounding | Up to 2000 RPM
           </p>
         </div>
 
@@ -409,7 +563,7 @@ Search for the most recent and credible information available.`
               <CardHeader>
                 <CardTitle className="flex items-center gap-3 text-xl font-light">
                   <Settings className="h-5 w-5" />
-                  Settings
+                  Research Settings
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
@@ -426,7 +580,7 @@ Search for the most recent and credible information available.`
                 </div>
 
                 <div className="space-y-2">
-                  <Label className="text-sm font-medium">Academic Tone</Label>
+                  <Label className="text-sm font-medium">Academic Level</Label>
                   <Select value={settings.tone} onValueChange={(value: any) => setSettings({...settings, tone: value})}>
                     <SelectTrigger className="border-muted focus:border-foreground">
                       <SelectValue />
@@ -440,7 +594,7 @@ Search for the most recent and credible information available.`
                 </div>
 
                 <div className="space-y-2">
-                  <Label className="text-sm font-medium">Model: {settings.model}</Label>
+                  <Label className="text-sm font-medium">AI Model</Label>
                   <Select value={settings.model} onValueChange={(value) => setSettings({...settings, model: value})}>
                     <SelectTrigger className="border-muted focus:border-foreground">
                       <SelectValue />
@@ -454,11 +608,33 @@ Search for the most recent and credible information available.`
                 </div>
 
                 <div className="space-y-2">
+                  <Label className="text-sm font-medium">Search Depth</Label>
+                  <Select value={settings.searchDepth} onValueChange={(value: any) => setSettings({...settings, searchDepth: value})}>
+                    <SelectTrigger className="border-muted focus:border-foreground">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="shallow">Shallow (Fast)</SelectItem>
+                      <SelectItem value="medium">Medium (Balanced)</SelectItem>
+                      <SelectItem value="deep">Deep (Comprehensive)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <Label className="text-sm font-medium">Enable Grounding</Label>
+                  <Switch
+                    checked={settings.useGrounding}
+                    onCheckedChange={(checked) => setSettings({...settings, useGrounding: checked})}
+                  />
+                </div>
+
+                <div className="space-y-2">
                   <Label className="text-sm font-medium">Word Count: {settings.wordCount.toLocaleString()}</Label>
                   <input
                     type="range"
-                    min="1000"
-                    max="25000"
+                    min="2000"
+                    max="50000"
                     step="1000"
                     value={settings.wordCount}
                     onChange={(e) => setSettings({...settings, wordCount: parseInt(e.target.value)})}
@@ -470,13 +646,63 @@ Search for the most recent and credible information available.`
                   <Label className="text-sm font-medium">Parallel Queries: {settings.parallelQueries}</Label>
                   <input
                     type="range"
-                    min="5"
-                    max="100"
-                    step="5"
+                    min="2"
+                    max="200"
+                    step="2"
                     value={settings.parallelQueries}
                     onChange={(e) => setSettings({...settings, parallelQueries: parseInt(e.target.value)})}
                     className="w-full h-1 bg-muted rounded-lg appearance-none cursor-pointer slider"
                   />
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Batch Size: {settings.batchSize}</Label>
+                  <input
+                    type="range"
+                    min="1"
+                    max="20"
+                    step="1"
+                    value={settings.batchSize}
+                    onChange={(e) => setSettings({...settings, batchSize: parseInt(e.target.value)})}
+                    className="w-full h-1 bg-muted rounded-lg appearance-none cursor-pointer slider"
+                  />
+                </div>
+
+                {/* Custom URLs Section */}
+                <div className="space-y-3">
+                  <Label className="text-sm font-medium flex items-center gap-2">
+                    <Globe className="h-4 w-4" />
+                    Custom URL Context
+                  </Label>
+                  <div className="flex gap-2">
+                    <Input
+                      value={newUrl}
+                      onChange={(e) => setNewUrl(e.target.value)}
+                      placeholder="https://example.com"
+                      className="flex-1"
+                    />
+                    <Button onClick={addCustomUrl} size="sm" variant="outline">
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  {settings.customUrls.length > 0 && (
+                    <div className="space-y-2 max-h-32 overflow-y-auto">
+                      {settings.customUrls.map((url, index) => (
+                        <div key={index} className="flex items-center gap-2 text-xs">
+                          <Link className="h-3 w-3 text-muted-foreground" />
+                          <span className="flex-1 truncate">{url}</span>
+                          <Button
+                            onClick={() => removeCustomUrl(index)}
+                            size="sm"
+                            variant="ghost"
+                            className="h-6 w-6 p-0"
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 <Button 
@@ -521,6 +747,9 @@ Search for the most recent and credible information available.`
                         <Zap className="h-3 w-3 mr-1" />
                         {totalReferences} refs
                       </Badge>
+                      <Badge variant="outline" className="border-foreground text-foreground">
+                        Batch: {settings.batchSize}
+                      </Badge>
                     </div>
                   </div>
                 </CardContent>
@@ -541,7 +770,7 @@ Search for the most recent and credible information available.`
                 }`}
               >
                 <MessageSquare className="h-4 w-4 inline mr-2" />
-                Chat
+                Research Chat
               </button>
               <button
                 onClick={() => setActiveTab('results')}
@@ -552,7 +781,7 @@ Search for the most recent and credible information available.`
                 }`}
               >
                 <Search className="h-4 w-4 inline mr-2" />
-                Results ({results.length})
+                Query Results ({results.length})
               </button>
               <button
                 onClick={() => setActiveTab('report')}
@@ -563,7 +792,7 @@ Search for the most recent and credible information available.`
                 }`}
               >
                 <FileText className="h-4 w-4 inline mr-2" />
-                Report
+                Final Report
               </button>
             </div>
 
@@ -573,7 +802,7 @@ Search for the most recent and credible information available.`
                 <CardHeader>
                   <CardTitle className="flex items-center gap-3 text-xl font-light">
                     <MessageSquare className="h-5 w-5" />
-                    Research Chat
+                    Research Progress Chat
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -581,7 +810,7 @@ Search for the most recent and credible information available.`
                     {chatMessages.length === 0 && (
                       <div className="text-center text-muted-foreground py-8">
                         <Brain className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                        <p className="font-light">Start a research session to see the conversation</p>
+                        <p className="font-light">Start a research session to see live progress</p>
                       </div>
                     )}
                     {chatMessages.map((message) => (
@@ -618,7 +847,7 @@ Search for the most recent and credible information available.`
                   <CardTitle className="flex items-center justify-between">
                     <div className="flex items-center gap-3 text-xl font-light">
                       <Search className="h-5 w-5" />
-                      Parallel Queries ({results.length})
+                      Query Results ({results.length})
                     </div>
                     <Button
                       variant="outline"
@@ -627,6 +856,7 @@ Search for the most recent and credible information available.`
                       className="border-foreground hover:bg-foreground hover:text-background transition-all duration-200"
                     >
                       {showQueries ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      {showQueries ? ' Hide' : ' Show'} Details
                     </Button>
                   </CardTitle>
                 </CardHeader>
@@ -643,7 +873,7 @@ Search for the most recent and credible information available.`
                           </div>
                           {result.response && result.status === 'completed' && (
                             <p className="text-sm text-muted-foreground mb-3 font-light">
-                              {result.response.substring(0, 150)}...
+                              {result.response.substring(0, 200)}...
                             </p>
                           )}
                           {result.status === 'error' && (
@@ -653,11 +883,17 @@ Search for the most recent and credible information available.`
                           )}
                           <div className="flex items-center gap-2">
                             <Badge variant="secondary" className="border border-muted font-light">
+                              <Link className="h-3 w-3 mr-1" />
                               {result.references.length} references
                             </Badge>
                             <Badge variant="outline" className={`font-light ${result.status === 'completed' ? 'border-green-500 text-green-700' : result.status === 'error' ? 'border-red-500 text-red-700' : 'border-muted'}`}>
                               {result.status}
                             </Badge>
+                            {result.references.length > 0 && (
+                              <Badge variant="outline" className="border-blue-500 text-blue-700 font-light">
+                                URLs: {result.references.filter(r => r.url !== '#citation').length}
+                              </Badge>
+                            )}
                           </div>
                         </div>
                       ))}
@@ -674,7 +910,7 @@ Search for the most recent and credible information available.`
                   <CardTitle className="flex items-center justify-between">
                     <div className="flex items-center gap-3 text-xl font-light">
                       <FileText className="h-5 w-5" />
-                      Final Research Report
+                      Professional Research Report
                     </div>
                     <Button 
                       onClick={downloadReport} 
@@ -683,7 +919,7 @@ Search for the most recent and credible information available.`
                       className="border-foreground hover:bg-foreground hover:text-background transition-all duration-200"
                     >
                       <Download className="h-4 w-4 mr-2" />
-                      Download
+                      Download Report
                     </Button>
                   </CardTitle>
                 </CardHeader>
@@ -700,7 +936,7 @@ Search for the most recent and credible information available.`
                 <CardContent className="text-center py-12">
                   <FileText className="h-16 w-16 mx-auto mb-4 opacity-50" />
                   <p className="text-muted-foreground font-light">No research report generated yet</p>
-                  <p className="text-sm text-muted-foreground font-light mt-2">Start a research session to generate a comprehensive report</p>
+                  <p className="text-sm text-muted-foreground font-light mt-2">Start a research session to generate a comprehensive professional report</p>
                 </CardContent>
               </Card>
             )}
