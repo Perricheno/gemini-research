@@ -28,7 +28,7 @@ interface ResearchSettings {
 
 const DeepResearchApp = () => {
   const [topic, setTopic] = useState('');
-  const apiKey = 'AIzaSyDVU5wpZ95BLryznNdrrVXZgROhbTw2_Ac'; // Embedded API key
+  const apiKey = 'AIzaSyDVU5wpZ95BLryznNdrrVXZgROhbTw2_Ac';
   const [settings, setSettings] = useState<ResearchSettings>({
     tone: 'phd',
     wordCount: 5000,
@@ -102,7 +102,16 @@ const DeepResearchApp = () => {
         body: JSON.stringify({
           contents: [{
             parts: [{
-              text: `Conduct detailed research on: "${query}". Provide comprehensive information with specific data, statistics, and examples. Include references and sources where possible. Focus on recent and credible information.`
+              text: `Research and analyze the following topic using current internet data: "${query}". 
+
+Please provide:
+1. Comprehensive analysis with specific data and statistics
+2. Recent developments and trends (2023-2024)
+3. Key findings and insights
+4. Sources and references
+5. Expert opinions and case studies
+
+Search for the most recent and credible information available.`
             }]
           }],
           generationConfig: {
@@ -112,19 +121,15 @@ const DeepResearchApp = () => {
             maxOutputTokens: 2048,
           },
           tools: [{
-            googleSearchRetrieval: {
-              dynamicRetrievalConfig: {
-                mode: "MODE_DYNAMIC",
-                dynamicThreshold: 0.7
-              }
-            }
+            googleSearch: {}
           }]
         }),
       });
 
       if (!response.ok) {
-        console.error(`API call failed for query ${chatId}: ${response.status}`);
-        throw new Error(`API call failed for query: ${query}`);
+        const errorData = await response.json();
+        console.error(`API call failed for query ${chatId}:`, errorData);
+        throw new Error(`API Error: ${errorData.error?.message || 'Unknown error'}`);
       }
 
       const data = await response.json();
@@ -207,7 +212,7 @@ const DeepResearchApp = () => {
       setCurrentStep(`Executing ${queries.length} parallel research queries...`);
       toast.success(`Started ${queries.length} parallel research queries`);
       
-      const batchSize = 5; // Process in batches to avoid rate limits
+      const batchSize = 3; // Reduced batch size to avoid rate limits
       const allResults: ResearchResult[] = [];
       
       for (let i = 0; i < queries.length; i += batchSize) {
@@ -250,8 +255,8 @@ const DeepResearchApp = () => {
           
           setProgress(((i + batchSize) / queries.length) * 70);
           
-          // Small delay between batches
-          await new Promise(resolve => setTimeout(resolve, 2000));
+          // Delay between batches to respect rate limits
+          await new Promise(resolve => setTimeout(resolve, 3000));
         } catch (error) {
           console.error('Batch error:', error);
         }
@@ -344,184 +349,207 @@ const DeepResearchApp = () => {
   };
 
   return (
-    <div className="container mx-auto p-6 max-w-6xl">
-      <div className="text-center mb-8">
-        <h1 className="text-4xl font-bold mb-4 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-          Deep Research AI
-        </h1>
-        <p className="text-muted-foreground text-lg">
-          Powered by Gemini 2.0 Flash + Grounding with parallel processing
-        </p>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-1 space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Settings className="h-5 w-5" />
-                Research Settings
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label htmlFor="topic">Research Topic</Label>
-                <Textarea
-                  id="topic"
-                  value={topic}
-                  onChange={(e) => setTopic(e.target.value)}
-                  placeholder="Enter your research topic or question..."
-                  rows={3}
-                />
-              </div>
-
-              <div>
-                <Label>Academic Tone</Label>
-                <Select value={settings.tone} onValueChange={(value: any) => setSettings({...settings, tone: value})}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="phd">PhD Level</SelectItem>
-                    <SelectItem value="bachelor">Bachelor Level</SelectItem>
-                    <SelectItem value="school">School Level</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <Label>Target Word Count: {settings.wordCount.toLocaleString()}</Label>
-                <input
-                  type="range"
-                  min="1000"
-                  max="25000"
-                  step="1000"
-                  value={settings.wordCount}
-                  onChange={(e) => setSettings({...settings, wordCount: parseInt(e.target.value)})}
-                  className="w-full mt-2"
-                />
-              </div>
-
-              <div>
-                <Label>Parallel Queries: {settings.parallelQueries}</Label>
-                <input
-                  type="range"
-                  min="5"
-                  max="100"
-                  step="5"
-                  value={settings.parallelQueries}
-                  onChange={(e) => setSettings({...settings, parallelQueries: parseInt(e.target.value)})}
-                  className="w-full mt-2"
-                />
-              </div>
-
-              <Button 
-                onClick={conductParallelResearch}
-                disabled={isResearching}
-                className="w-full"
-                size="lg"
-              >
-                {isResearching ? (
-                  <>
-                    <Brain className="mr-2 h-4 w-4 animate-spin" />
-                    Researching...
-                  </>
-                ) : (
-                  <>
-                    <Search className="mr-2 h-4 w-4" />
-                    Start Deep Research
-                  </>
-                )}
-              </Button>
-            </CardContent>
-          </Card>
-
-          {isResearching && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Progress</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  <Progress value={progress} className="w-full" />
-                  <p className="text-sm text-muted-foreground">{currentStep}</p>
-                  <div className="flex gap-2 flex-wrap">
-                    <Badge variant="outline">{completedQueries}/{settings.parallelQueries} queries completed</Badge>
-                    <Badge variant="outline">{totalReferences} references found</Badge>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
+    <div className="min-h-screen bg-white text-black">
+      <div className="container mx-auto p-6 max-w-6xl">
+        <div className="text-center mb-8 animate-fade-in">
+          <h1 className="text-5xl font-light mb-4 tracking-wide">
+            Deep Research AI
+          </h1>
+          <div className="w-24 h-0.5 bg-black mx-auto mb-4"></div>
+          <p className="text-gray-600 text-lg font-light">
+            Powered by Gemini 2.0 Flash + Grounding with parallel processing
+          </p>
         </div>
 
-        <div className="lg:col-span-2 space-y-6">
-          {results.length > 0 && (
-            <Card>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-1 space-y-6">
+            <Card className="border-2 border-black hover:shadow-lg transition-all duration-300 animate-scale-in">
               <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Search className="h-5 w-5" />
-                    Parallel Queries ({results.length})
-                  </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setShowQueries(!showQueries)}
-                  >
-                    {showQueries ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </Button>
+                <CardTitle className="flex items-center gap-3 text-xl font-light">
+                  <Settings className="h-5 w-5" />
+                  Research Settings
                 </CardTitle>
               </CardHeader>
-              {showQueries && (
-                <CardContent>
-                  <div className="max-h-96 overflow-y-auto space-y-2">
-                    {results.map((result, index) => (
-                      <div key={index} className="border rounded-lg p-3">
-                        <div className="flex items-center gap-2 mb-2">
-                          <Badge variant={result.status === 'completed' ? 'default' : result.status === 'error' ? 'destructive' : 'secondary'}>
-                            Query {result.chatId}
-                          </Badge>
-                          <span className="text-sm font-medium">{result.query}</span>
-                        </div>
-                        {result.response && (
-                          <p className="text-sm text-muted-foreground mb-2">
-                            {result.response.substring(0, 150)}...
-                          </p>
-                        )}
-                        <div className="flex items-center gap-2">
-                          <Badge variant="secondary">{result.references.length} references</Badge>
-                          <Badge variant="outline">{result.status}</Badge>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              )}
-            </Card>
-          )}
-
-          {finalReport && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <FileText className="h-5 w-5" />
-                    Final Research Report
-                  </div>
-                  <Button onClick={downloadReport} variant="outline" size="sm">
-                    <Download className="h-4 w-4 mr-2" />
-                    Download
-                  </Button>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="max-h-96 overflow-y-auto">
-                  <pre className="whitespace-pre-wrap text-sm">{finalReport}</pre>
+              <CardContent className="space-y-6">
+                <div className="space-y-2">
+                  <Label htmlFor="topic" className="text-sm font-medium">Research Topic</Label>
+                  <Textarea
+                    id="topic"
+                    value={topic}
+                    onChange={(e) => setTopic(e.target.value)}
+                    placeholder="Enter your research topic or question..."
+                    rows={3}
+                    className="border-gray-300 focus:border-black transition-colors duration-200"
+                  />
                 </div>
+
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Academic Tone</Label>
+                  <Select value={settings.tone} onValueChange={(value: any) => setSettings({...settings, tone: value})}>
+                    <SelectTrigger className="border-gray-300 focus:border-black">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="phd">PhD Level</SelectItem>
+                      <SelectItem value="bachelor">Bachelor Level</SelectItem>
+                      <SelectItem value="school">School Level</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Target Word Count: {settings.wordCount.toLocaleString()}</Label>
+                  <input
+                    type="range"
+                    min="1000"
+                    max="25000"
+                    step="1000"
+                    value={settings.wordCount}
+                    onChange={(e) => setSettings({...settings, wordCount: parseInt(e.target.value)})}
+                    className="w-full h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Parallel Queries: {settings.parallelQueries}</Label>
+                  <input
+                    type="range"
+                    min="5"
+                    max="100"
+                    step="5"
+                    value={settings.parallelQueries}
+                    onChange={(e) => setSettings({...settings, parallelQueries: parseInt(e.target.value)})}
+                    className="w-full h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
+                  />
+                </div>
+
+                <Button 
+                  onClick={conductParallelResearch}
+                  disabled={isResearching}
+                  className="w-full bg-black hover:bg-gray-800 text-white border-0 py-3 text-lg font-light transition-all duration-300 hover:scale-105"
+                  size="lg"
+                >
+                  {isResearching ? (
+                    <>
+                      <Brain className="mr-2 h-5 w-5 animate-spin" />
+                      Researching...
+                    </>
+                  ) : (
+                    <>
+                      <Search className="mr-2 h-5 w-5" />
+                      Start Deep Research
+                    </>
+                  )}
+                </Button>
               </CardContent>
             </Card>
-          )}
+
+            {isResearching && (
+              <Card className="border-2 border-gray-200 animate-slide-in-right">
+                <CardHeader>
+                  <CardTitle className="text-xl font-light">Progress</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <Progress value={progress} className="w-full h-2" />
+                    <p className="text-sm text-gray-600 font-light">{currentStep}</p>
+                    <div className="flex gap-2 flex-wrap">
+                      <Badge variant="outline" className="border-black text-black">
+                        {completedQueries}/{settings.parallelQueries} queries completed
+                      </Badge>
+                      <Badge variant="outline" className="border-black text-black">
+                        {totalReferences} references found
+                      </Badge>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+
+          <div className="lg:col-span-2 space-y-6">
+            {results.length > 0 && (
+              <Card className="border-2 border-gray-200 animate-fade-in">
+                <CardHeader>
+                  <CardTitle className="flex items-center justify-between">
+                    <div className="flex items-center gap-3 text-xl font-light">
+                      <Search className="h-5 w-5" />
+                      Parallel Queries ({results.length})
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowQueries(!showQueries)}
+                      className="border-black hover:bg-black hover:text-white transition-all duration-200"
+                    >
+                      {showQueries ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </Button>
+                  </CardTitle>
+                </CardHeader>
+                {showQueries && (
+                  <CardContent>
+                    <div className="max-h-96 overflow-y-auto space-y-3">
+                      {results.map((result, index) => (
+                        <div key={index} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-all duration-200 animate-scale-in" style={{animationDelay: `${index * 50}ms`}}>
+                          <div className="flex items-center gap-3 mb-3">
+                            <Badge variant={result.status === 'completed' ? 'default' : result.status === 'error' ? 'destructive' : 'secondary'} className="font-light">
+                              Query {result.chatId}
+                            </Badge>
+                            <span className="text-sm font-medium flex-1">{result.query}</span>
+                          </div>
+                          {result.response && result.status === 'completed' && (
+                            <p className="text-sm text-gray-600 mb-3 font-light">
+                              {result.response.substring(0, 150)}...
+                            </p>
+                          )}
+                          {result.status === 'error' && (
+                            <p className="text-sm text-red-600 mb-3">
+                              {result.response}
+                            </p>
+                          )}
+                          <div className="flex items-center gap-2">
+                            <Badge variant="secondary" className="border border-gray-300 font-light">
+                              {result.references.length} references
+                            </Badge>
+                            <Badge variant="outline" className={`font-light ${result.status === 'completed' ? 'border-green-500 text-green-700' : result.status === 'error' ? 'border-red-500 text-red-700' : 'border-gray-400'}`}>
+                              {result.status}
+                            </Badge>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                )}
+              </Card>
+            )}
+
+            {finalReport && (
+              <Card className="border-2 border-black animate-fade-in">
+                <CardHeader>
+                  <CardTitle className="flex items-center justify-between">
+                    <div className="flex items-center gap-3 text-xl font-light">
+                      <FileText className="h-5 w-5" />
+                      Final Research Report
+                    </div>
+                    <Button 
+                      onClick={downloadReport} 
+                      variant="outline" 
+                      size="sm"
+                      className="border-black hover:bg-black hover:text-white transition-all duration-200"
+                    >
+                      <Download className="h-4 w-4 mr-2" />
+                      Download
+                    </Button>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="max-h-96 overflow-y-auto">
+                    <pre className="whitespace-pre-wrap text-sm font-light leading-relaxed">{finalReport}</pre>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
         </div>
       </div>
     </div>
