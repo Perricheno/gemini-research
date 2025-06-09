@@ -18,6 +18,7 @@ interface ResearchSettingsProps {
   setSettings: (settings: ResearchSettingsType) => void;
   onStartResearch: () => void;
   isResearching: boolean;
+  theme?: 'light' | 'dark';
 }
 
 const ResearchSettings: React.FC<ResearchSettingsProps> = ({
@@ -26,7 +27,8 @@ const ResearchSettings: React.FC<ResearchSettingsProps> = ({
   settings,
   setSettings,
   onStartResearch,
-  isResearching
+  isResearching,
+  theme = 'light'
 }) => {
   const [newUrl, setNewUrl] = React.useState('');
   const [bulkUrls, setBulkUrls] = React.useState('');
@@ -38,7 +40,7 @@ const ResearchSettings: React.FC<ResearchSettingsProps> = ({
         customUrls: [...settings.customUrls, newUrl.trim()]
       });
       setNewUrl('');
-      toast.success('URL добавлен в исследовательский контекст');
+      toast.success('URL added to research context');
     }
   };
 
@@ -56,9 +58,9 @@ const ResearchSettings: React.FC<ResearchSettingsProps> = ({
           customUrls: [...settings.customUrls, ...urls]
         });
         setBulkUrls('');
-        toast.success(`Добавлено ${urls.length} URL в исследовательский контекст`);
+        toast.success(`Added ${urls.length} URLs to research context`);
       } else {
-        toast.error('Не найдены валидные URL в тексте');
+        toast.error('No valid URLs found in text');
       }
     }
   };
@@ -75,78 +77,86 @@ const ResearchSettings: React.FC<ResearchSettingsProps> = ({
       ...settings,
       customUrls: []
     });
-    toast.success('Все URL удалены');
+    toast.success('All URLs removed');
   };
 
+  const themeClasses = theme === 'dark' 
+    ? 'bg-gray-900 border-white text-white' 
+    : 'bg-white border-black text-black';
+
+  const buttonClasses = theme === 'dark'
+    ? 'border-white hover:bg-white hover:text-black'
+    : 'border-black hover:bg-black hover:text-white';
+
   return (
-    <Card className="border-2 border-foreground hover:shadow-2xl transition-all duration-500 animate-scale-in">
+    <Card className={`border-2 hover:shadow-2xl transition-all duration-500 animate-scale-in ${themeClasses}`}>
       <CardHeader>
         <CardTitle className="flex items-center gap-3 text-xl font-light">
           <Settings className="h-5 w-5" />
-          Настройки исследования
+          Research Settings
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="space-y-2">
-          <Label htmlFor="topic" className="text-sm font-medium">Тема для глубокого исследования</Label>
+          <Label htmlFor="topic" className="text-sm font-medium">Deep Research Topic</Label>
           <Textarea
             id="topic"
             value={topic}
             onChange={(e) => setTopic(e.target.value)}
-            placeholder="Введите тему для автоматического разделения и глубокого анализа..."
+            placeholder="Enter topic for automatic splitting and deep analysis..."
             rows={3}
-            className="border-muted focus:border-foreground transition-colors duration-200"
+            className={`transition-colors duration-200 ${theme === 'dark' ? 'border-white focus:border-gray-300' : 'border-black focus:border-gray-600'}`}
           />
-          <p className="text-xs text-muted-foreground">Gemini 2.5 Flash Preview автоматически разделит тему на подтемы</p>
+          <p className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>Gemini 2.5 Flash Preview will automatically split topic into subtopics</p>
         </div>
 
         <div className="space-y-2">
-          <Label className="text-sm font-medium">Академический уровень</Label>
+          <Label className="text-sm font-medium">Academic Level</Label>
           <Select value={settings.tone} onValueChange={(value: any) => setSettings({...settings, tone: value})}>
-            <SelectTrigger className="border-muted focus:border-foreground">
+            <SelectTrigger className={`${theme === 'dark' ? 'border-white focus:border-gray-300' : 'border-black focus:border-gray-600'}`}>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="phd">Уровень PhD (Продвинутый)</SelectItem>
-              <SelectItem value="bachelor">Уровень бакалавра (Академический)</SelectItem>
-              <SelectItem value="school">Школьный уровень (Простой)</SelectItem>
+              <SelectItem value="phd">PhD Level (Advanced)</SelectItem>
+              <SelectItem value="bachelor">Bachelor Level (Academic)</SelectItem>
+              <SelectItem value="school">School Level (Simple)</SelectItem>
             </SelectContent>
           </Select>
         </div>
 
         <div className="space-y-2">
-          <Label className="text-sm font-medium">ИИ модель</Label>
+          <Label className="text-sm font-medium">AI Model</Label>
           <Select value={settings.model} onValueChange={(value) => setSettings({...settings, model: value})}>
-            <SelectTrigger className="border-muted focus:border-foreground">
+            <SelectTrigger className={`${theme === 'dark' ? 'border-white focus:border-gray-300' : 'border-black focus:border-gray-600'}`}>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="gemini-2.5-flash-preview-05-20">Gemini 2.5 Flash Preview (веб-поиск)</SelectItem>
-              <SelectItem value="gemini-2.0-flash">Gemini 2.0 Flash (веб-поиск)</SelectItem>
-              <SelectItem value="gemini-2.0-flash-exp">Gemini 2.0 Flash Exp (веб-поиск)</SelectItem>
-              <SelectItem value="gemini-1.5-pro">Gemini 1.5 Pro (веб-поиск)</SelectItem>
+              <SelectItem value="gemini-2.5-flash-preview-05-20">Gemini 2.5 Flash Preview (web search)</SelectItem>
+              <SelectItem value="gemini-2.0-flash">Gemini 2.0 Flash (web search)</SelectItem>
+              <SelectItem value="gemini-2.0-flash-exp">Gemini 2.0 Flash Exp (web search)</SelectItem>
+              <SelectItem value="gemini-1.5-pro">Gemini 1.5 Pro (web search)</SelectItem>
             </SelectContent>
           </Select>
         </div>
 
         <div className="space-y-2">
-          <Label className="text-sm font-medium">Глубина веб-анализа</Label>
+          <Label className="text-sm font-medium">Web Analysis Depth</Label>
           <Select value={settings.searchDepth} onValueChange={(value: any) => setSettings({...settings, searchDepth: value})}>
-            <SelectTrigger className="border-muted focus:border-foreground">
+            <SelectTrigger className={`${theme === 'dark' ? 'border-white focus:border-gray-300' : 'border-black focus:border-gray-600'}`}>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="shallow">Поверхностный (Быстро)</SelectItem>
-              <SelectItem value="medium">Средний (Сбалансированно)</SelectItem>
-              <SelectItem value="deep">Глубокий (Максимум)</SelectItem>
+              <SelectItem value="shallow">Shallow (Fast)</SelectItem>
+              <SelectItem value="medium">Medium (Balanced)</SelectItem>
+              <SelectItem value="deep">Deep (Maximum)</SelectItem>
             </SelectContent>
           </Select>
         </div>
 
         <div className="flex items-center justify-between">
           <div className="space-y-1">
-            <Label className="text-sm font-medium">Принудительный веб-поиск</Label>
-            <p className="text-xs text-muted-foreground">НЕТ лимитов на веб-поиск и анализ!</p>
+            <Label className="text-sm font-medium">Forced Web Search</Label>
+            <p className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>NO limits on web search and analysis!</p>
           </div>
           <Switch
             checked={true}
@@ -156,8 +166,8 @@ const ResearchSettings: React.FC<ResearchSettingsProps> = ({
         </div>
 
         <div className="space-y-2">
-          <Label className="text-sm font-medium">Слов в отчете: {settings.wordCount.toLocaleString()}</Label>
-          <p className="text-xs text-muted-foreground">Многочастная генерация по 10,000 слов на часть</p>
+          <Label className="text-sm font-medium">Words in Report: {settings.wordCount.toLocaleString()}</Label>
+          <p className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>Multi-part generation by 10,000 words per part</p>
           <input
             type="range"
             min="10000"
@@ -170,8 +180,8 @@ const ResearchSettings: React.FC<ResearchSettingsProps> = ({
         </div>
 
         <div className="space-y-2">
-          <Label className="text-sm font-medium">Автоматических подтем: {settings.parallelQueries}</Label>
-          <p className="text-xs text-muted-foreground">Gemini 2.5 Flash Preview разделит тему на уникальные подтемы</p>
+          <Label className="text-sm font-medium">Automatic Subtopics: {settings.parallelQueries}</Label>
+          <p className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>Gemini 2.5 Flash Preview will split topic into unique subtopics</p>
           <input
             type="range"
             min="10"
@@ -184,7 +194,7 @@ const ResearchSettings: React.FC<ResearchSettingsProps> = ({
         </div>
 
         <div className="space-y-2">
-          <Label className="text-sm font-medium">Размер батча: {settings.batchSize}</Label>
+          <Label className="text-sm font-medium">Batch Size: {settings.batchSize}</Label>
           <input
             type="range"
             min="5"
@@ -200,7 +210,7 @@ const ResearchSettings: React.FC<ResearchSettingsProps> = ({
         <div className="space-y-3">
           <Label className="text-sm font-medium flex items-center gap-2">
             <Globe className="h-4 w-4" />
-            Пользовательские URL для веб-поиска ({settings.customUrls.length})
+            Custom URLs for Web Search ({settings.customUrls.length})
           </Label>
           
           {/* Single URL input */}
@@ -211,25 +221,25 @@ const ResearchSettings: React.FC<ResearchSettingsProps> = ({
               placeholder="https://example.com"
               className="flex-1"
             />
-            <Button onClick={addCustomUrl} size="sm" variant="outline">
+            <Button onClick={addCustomUrl} size="sm" variant="outline" className={buttonClasses}>
               <Plus className="h-4 w-4" />
             </Button>
           </div>
 
           {/* Bulk URL input */}
           <div className="space-y-2">
-            <Label className="text-xs text-muted-foreground">Массовое добавление URL (Ctrl+V)</Label>
+            <Label className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>Bulk URL Addition (Ctrl+V)</Label>
             <Textarea
               value={bulkUrls}
               onChange={(e) => setBulkUrls(e.target.value)}
-              placeholder="Вставьте несколько URL для включения в веб-поиск"
+              placeholder="Paste multiple URLs to include in web search"
               rows={3}
               className="text-xs"
             />
             <div className="flex gap-2">
-              <Button onClick={addBulkUrls} size="sm" variant="outline" className="flex-1">
+              <Button onClick={addBulkUrls} size="sm" variant="outline" className={`flex-1 ${buttonClasses}`}>
                 <Upload className="h-3 w-3 mr-1" />
-                Добавить все
+                Add All
               </Button>
               {settings.customUrls.length > 0 && (
                 <Button onClick={clearAllUrls} size="sm" variant="outline" className="text-destructive">
@@ -241,10 +251,10 @@ const ResearchSettings: React.FC<ResearchSettingsProps> = ({
 
           {/* URL list */}
           {settings.customUrls.length > 0 && (
-            <div className="space-y-2 max-h-32 overflow-y-auto border border-muted rounded p-2">
+            <div className={`space-y-2 max-h-32 overflow-y-auto border rounded p-2 ${theme === 'dark' ? 'border-white' : 'border-black'}`}>
               {settings.customUrls.map((url, index) => (
-                <div key={index} className="flex items-center gap-2 text-xs bg-muted/50 p-1 rounded">
-                  <Link className="h-3 w-3 text-muted-foreground flex-shrink-0" />
+                <div key={index} className={`flex items-center gap-2 text-xs p-1 rounded ${theme === 'dark' ? 'bg-gray-800' : 'bg-gray-100'}`}>
+                  <Link className={`h-3 w-3 flex-shrink-0 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`} />
                   <span className="flex-1 truncate" title={url}>{url}</span>
                   <Button
                     onClick={() => removeCustomUrl(index)}
@@ -263,18 +273,22 @@ const ResearchSettings: React.FC<ResearchSettingsProps> = ({
         <Button 
           onClick={onStartResearch}
           disabled={isResearching}
-          className="w-full bg-foreground hover:bg-muted-foreground text-background border-0 py-3 text-lg font-light transition-all duration-300 hover:scale-105"
+          className={`w-full py-3 text-lg font-light transition-all duration-300 hover:scale-105 ${
+            theme === 'dark' 
+              ? 'bg-white text-black hover:bg-gray-200' 
+              : 'bg-black text-white hover:bg-gray-800'
+          }`}
           size="lg"
         >
           {isResearching ? (
             <>
               <Globe className="mr-2 h-5 w-5 animate-spin" />
-              Исследовательская машина работает...
+              Research Machine Working...
             </>
           ) : (
             <>
               <Globe className="mr-2 h-5 w-5" />
-              Запустить исследовательскую машину
+              Start Research Machine
             </>
           )}
         </Button>
