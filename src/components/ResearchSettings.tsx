@@ -83,12 +83,12 @@ const ResearchSettings: React.FC<ResearchSettingsProps> = ({
       <CardHeader>
         <CardTitle className="flex items-center gap-3 text-xl font-light">
           <Settings className="h-5 w-5" />
-          СУПЕР МАШИНА настройки
+          Настройки исследования
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="space-y-2">
-          <Label htmlFor="topic" className="text-sm font-medium">Тема для СУПЕР исследования</Label>
+          <Label htmlFor="topic" className="text-sm font-medium">Тема для глубокого исследования</Label>
           <Textarea
             id="topic"
             value={topic}
@@ -115,16 +115,16 @@ const ResearchSettings: React.FC<ResearchSettingsProps> = ({
         </div>
 
         <div className="space-y-2">
-          <Label className="text-sm font-medium">СУПЕР модель</Label>
+          <Label className="text-sm font-medium">ИИ модель</Label>
           <Select value={settings.model} onValueChange={(value) => setSettings({...settings, model: value})}>
             <SelectTrigger className="border-muted focus:border-foreground">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="gemini-2.5-flash-preview-05-20">Gemini 2.5 Flash Preview (СУПЕР веб-поиск)</SelectItem>
-              <SelectItem value="gemini-2.0-flash">Gemini 2.0 Flash (Веб-поиск)</SelectItem>
-              <SelectItem value="gemini-2.0-flash-exp">Gemini 2.0 Flash Exp (Веб-поиск)</SelectItem>
-              <SelectItem value="gemini-1.5-pro">Gemini 1.5 Pro (Веб-поиск)</SelectItem>
+              <SelectItem value="gemini-2.5-flash-preview-05-20">Gemini 2.5 Flash Preview (веб-поиск)</SelectItem>
+              <SelectItem value="gemini-2.0-flash">Gemini 2.0 Flash (веб-поиск)</SelectItem>
+              <SelectItem value="gemini-2.0-flash-exp">Gemini 2.0 Flash Exp (веб-поиск)</SelectItem>
+              <SelectItem value="gemini-1.5-pro">Gemini 1.5 Pro (веб-поиск)</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -138,7 +138,7 @@ const ResearchSettings: React.FC<ResearchSettingsProps> = ({
             <SelectContent>
               <SelectItem value="shallow">Поверхностный (Быстро)</SelectItem>
               <SelectItem value="medium">Средний (Сбалансированно)</SelectItem>
-              <SelectItem value="deep">СУПЕР глубокий (Максимум)</SelectItem>
+              <SelectItem value="deep">Глубокий (Максимум)</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -146,7 +146,7 @@ const ResearchSettings: React.FC<ResearchSettingsProps> = ({
         <div className="flex items-center justify-between">
           <div className="space-y-1">
             <Label className="text-sm font-medium">Принудительный веб-поиск</Label>
-            <p className="text-xs text-muted-foreground">СУПЕР МАШИНА: НЕТ лимитов на веб-поиск!</p>
+            <p className="text-xs text-muted-foreground">НЕТ лимитов на веб-поиск и анализ!</p>
           </div>
           <Switch
             checked={true}
@@ -175,8 +175,8 @@ const ResearchSettings: React.FC<ResearchSettingsProps> = ({
           <input
             type="range"
             min="10"
-            max="100"
-            step="5"
+            max="500"
+            step="10"
             value={settings.parallelQueries}
             onChange={(e) => setSettings({...settings, parallelQueries: parseInt(e.target.value)})}
             className="w-full h-1 bg-muted rounded-lg appearance-none cursor-pointer slider"
@@ -188,7 +188,7 @@ const ResearchSettings: React.FC<ResearchSettingsProps> = ({
           <input
             type="range"
             min="5"
-            max="100"
+            max="50"
             step="5"
             value={settings.batchSize}
             onChange={(e) => setSettings({...settings, batchSize: parseInt(e.target.value)})}
@@ -269,12 +269,12 @@ const ResearchSettings: React.FC<ResearchSettingsProps> = ({
           {isResearching ? (
             <>
               <Globe className="mr-2 h-5 w-5 animate-spin" />
-              СУПЕР МАШИНА работает...
+              Исследовательская машина работает...
             </>
           ) : (
             <>
               <Globe className="mr-2 h-5 w-5" />
-              Запустить СУПЕР МАШИНУ
+              Запустить исследовательскую машину
             </>
           )}
         </Button>
