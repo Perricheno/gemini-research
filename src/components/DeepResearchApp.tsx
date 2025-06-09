@@ -1,10 +1,11 @@
+
 import React, { useState } from 'react';
 import { Search, Brain, FileText, Download, Eye, EyeOff, MessageSquare } from 'lucide-react';
 import { toast } from 'sonner';
 import { ResearchResult, Reference, ResearchSettings, ChatMessage } from '../types/research';
 import { generateResearchQueries } from '../utils/researchUtils';
 import { callGeminiAPI } from '../utils/geminiApi';
-import ResearchSettings from './ResearchSettings';
+import ResearchSettingsComponent from './ResearchSettings';
 import ResearchProgress from './ResearchProgress';
 import ResearchChat from './ResearchChat';
 import ResearchResults from './ResearchResults';
@@ -273,7 +274,7 @@ const DeepResearchApp = () => {
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           {/* Settings Panel */}
           <div className="lg:col-span-1 space-y-6">
-            <ResearchSettings
+            <ResearchSettingsComponent
               topic={topic}
               setTopic={setTopic}
               settings={settings}
