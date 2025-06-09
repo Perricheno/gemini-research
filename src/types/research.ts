@@ -47,3 +47,10 @@ export interface ModelReport {
   timestamp: Date;
   wordCount: number;
 }
+
+export interface LatexTemplate {
+  id: string;
+  name: string;
+  content: string;
+  uploadDate: Date;
+}
