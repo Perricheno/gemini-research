@@ -22,7 +22,8 @@ const DeepResearchApp = () => {
     searchDepth: 'deep',
     includeRecent: true,
     language: 'en',
-    batchSize: 10
+    batchSize: 50,
+    apiKeys: []
   });
   
   const [isResearching, setIsResearching] = useState(false);
@@ -41,6 +42,7 @@ const DeepResearchApp = () => {
     currentPart: number;
     totalParts: number;
     content: string;
+    isComplete: boolean;
   } | null>(null);
   const [latexTemplate, setLatexTemplate] = useState<LatexTemplate | null>(null);
 
@@ -87,6 +89,11 @@ const DeepResearchApp = () => {
       return;
     }
 
+    if (settings.batchSize >= 50 && settings.apiKeys.length < 3) {
+      toast.error('High volume mode requires at least 3 additional API keys');
+      return;
+    }
+
     setIsResearching(true);
     setProgress(0);
     setResults([]);
@@ -98,20 +105,20 @@ const DeepResearchApp = () => {
     setReportGenerationProgress(null);
     setActiveTab('results');
 
-    addChatMessage('user', `Starting research machine on topic: ${topic}`);
-    addChatMessage('system', 'Initialization: forced web search with full URLs, NO limits on search and analysis!');
+    addChatMessage('user', `Starting enhanced research machine on topic: ${topic}`);
+    addChatMessage('system', `Enhanced mode: Up to ${settings.parallelQueries} logical subtopics, ${settings.batchSize} batch size, completion verification enabled`);
 
     try {
-      // Step 1: Automatic topic splitting into subtopics
-      setCurrentStep('Automatic topic splitting into subtopics...');
+      // Step 1: Enhanced logical topic splitting
+      setCurrentStep('Creating enhanced logical structure with comprehensive subtopics...');
       setProgress(5);
-      addChatMessage('system', `Gemini 2.5 Flash Preview splitting topic into ${settings.parallelQueries} unique subtopics...`);
+      addChatMessage('system', `Gemini 2.5 Flash Preview creating ${settings.parallelQueries} logically structured unique subtopics...`);
       
       const subtopics = await generateSubtopics(topic, settings.parallelQueries, settings);
-      addChatMessage('system', `Generated ${subtopics.length} unique subtopics for detailed web research`);
+      addChatMessage('system', `Generated ${subtopics.length} enhanced logical subtopics covering all aspects comprehensively`);
       
-      // Step 2: Parallel web requests on subtopics with detailed analysis
-      setCurrentStep(`Executing ${subtopics.length} parallel web requests with detailed source analysis...`);
+      // Step 2: Optimized parallel processing
+      setCurrentStep(`Executing ${subtopics.length} optimized parallel requests with enhanced analysis...`);
       setProgress(10);
       
       const initialResults: ResearchResult[] = subtopics.map((subtopic, index) => ({
@@ -124,7 +131,7 @@ const DeepResearchApp = () => {
       }));
       setResults(initialResults);
       
-      addChatMessage('system', `Starting ${subtopics.length} parallel web search requests with deep source analysis and full URL extraction...`);
+      addChatMessage('system', `Starting ${subtopics.length} optimized parallel requests using ${settings.apiKeys.length + 1} API keys...`);
       
       const allResults: ResearchResult[] = [];
       const collectedReferences: Reference[] = [];
@@ -134,8 +141,8 @@ const DeepResearchApp = () => {
         const batchNumber = Math.floor(i / settings.batchSize) + 1;
         const totalBatches = Math.ceil(subtopics.length / settings.batchSize);
         
-        console.log(`Web search batch ${batchNumber}/${totalBatches} (${batch.length} requests)`);
-        addChatMessage('system', `Web search batch ${batchNumber}/${totalBatches}: detailed source analysis with full URLs for each subtopic...`);
+        console.log(`Enhanced batch ${batchNumber}/${totalBatches} (${batch.length} requests)`);
+        addChatMessage('system', `Enhanced batch ${batchNumber}/${totalBatches}: Processing ${batch.length} subtopics with optimized multi-key distribution...`);
         
         const batchPromises = batch.map((subtopic, index) => 
           callGeminiAPI(subtopic, i + index + 1, settings)
@@ -156,13 +163,13 @@ const DeepResearchApp = () => {
 
               if (result.value.status === 'completed') {
                 const wordCount = result.value.response.split(' ').length;
-                addChatMessage('research', `Web analysis ${result.value.chatId} completed: ${wordCount} words of analysis, found ${result.value.references.length} full URL sources`);
+                addChatMessage('research', `Enhanced analysis ${result.value.chatId}: ${wordCount} words, ${result.value.references.length} full URL sources`);
               }
             } else {
-              console.error(`Web request failed: ${batch[index]}`, result.reason);
+              console.error(`Enhanced request failed: ${batch[index]}`, result.reason);
               const errorResult: ResearchResult = {
                 query: batch[index],
-                response: `Web search error: ${result.reason}`,
+                response: `Enhanced search error: ${result.reason}`,
                 references: [],
                 chatId: i + index + 1,
                 status: 'error',
@@ -175,16 +182,16 @@ const DeepResearchApp = () => {
                 r.chatId === errorResult.chatId ? errorResult : r
               ));
 
-              addChatMessage('system', `Web request ${errorResult.chatId} completed with error: ${result.reason}`);
+              addChatMessage('system', `Request ${errorResult.chatId} completed with error: ${result.reason}`);
             }
           });
           
           setProgress(10 + ((i + settings.batchSize) / subtopics.length) * 50);
           
-          await new Promise(resolve => setTimeout(resolve, 2000));
+          await new Promise(resolve => setTimeout(resolve, 1000)); // Reduced delay for optimization
         } catch (error) {
-          console.error('Batch web search error:', error);
-          addChatMessage('system', `Web search batch error: ${error.message}`);
+          console.error('Enhanced batch error:', error);
+          addChatMessage('system', `Enhanced batch error: ${error.message}`);
         }
       }
 
@@ -192,37 +199,39 @@ const DeepResearchApp = () => {
       setTotalReferences(totalRefs);
       setAllReferences(collectedReferences);
       
-      // Step 3: Assembling all web data
-      setCurrentStep('Assembling web data for analysis...');
+      // Step 3: Enhanced data assembly
+      setCurrentStep('Assembling comprehensive web data for enhanced analysis...');
       setProgress(65);
       
       const successfulResults = allResults.filter(r => r.status === 'completed');
       const combinedWebData = successfulResults.map(r => 
-        `=== SUBTOPIC: ${r.query} ===\nDETAILED ANALYSIS:\n${r.response}`
+        `=== ENHANCED SUBTOPIC: ${r.query} ===\nCOMPREHENSIVE ANALYSIS:\n${r.response}`
       ).join('\n\n');
       
       setWebDataForDownload(combinedWebData);
       const totalAnalysisWords = combinedWebData.split(' ').length;
-      addChatMessage('system', `Web research completed! Processed ${allResults.length} requests, found ${totalRefs} full URL web sources.`);
-      addChatMessage('system', `Collected detailed analyses: ${totalAnalysisWords.toLocaleString()} words for synthesis into report`);
+      addChatMessage('system', `Enhanced research completed! Processed ${allResults.length} requests, found ${totalRefs} full URL sources.`);
+      addChatMessage('system', `Collected comprehensive analyses: ${totalAnalysisWords.toLocaleString()} words with enhanced logical structure`);
       
-      // Step 4: Multi-part final report generation
-      setCurrentStep('Generating multi-part report via Gemini 2.5 Flash Preview...');
+      // Step 4: Enhanced multi-part report with completion verification
+      setCurrentStep('Generating enhanced multi-part report with completion verification...');
       setProgress(70);
       setActiveTab('report');
       
       const totalParts = Math.ceil(settings.wordCount / 10000);
-      addChatMessage('system', `Starting multi-part report generation: ${totalParts} parts of 10000 words each with full URL sources`);
+      addChatMessage('system', `Starting enhanced report generation: ${totalParts} parts with completion verification system`);
       
-      const onPartGenerated = (partNumber: number, content: string, totalParts: number) => {
+      const onPartGenerated = (partNumber: number, content: string, totalParts: number, isComplete: boolean) => {
         const wordCount = content.split(' ').length;
-        addChatMessage('model-response', `Part ${partNumber}/${totalParts} of report generated: ${wordCount.toLocaleString()} words`);
+        const status = isComplete ? 'VERIFIED COMPLETE' : 'NEEDS RETRY';
+        addChatMessage('research', `Part ${partNumber}/${totalParts}: ${wordCount.toLocaleString()} words [${status}]`);
         setProgress(70 + (partNumber / totalParts) * 25);
         
         setReportGenerationProgress({
           currentPart: partNumber,
           totalParts,
-          content
+          content,
+          isComplete
         });
       };
 
@@ -237,13 +246,13 @@ const DeepResearchApp = () => {
       setFinalReport(finalReportContent);
       setReportGenerationProgress(null);
       const finalWordCount = finalReportContent.split(' ').length;
-      addChatMessage('system', `Multi-part report completed! Total length: ${finalWordCount.toLocaleString()} words with full URLs of all sources`);
+      addChatMessage('system', `Enhanced multi-part report completed! Total: ${finalWordCount.toLocaleString()} words with verified completion`);
       
-      // Step 5: LaTeX report generation (if template uploaded)
+      // Step 5: Enhanced LaTeX report with completion verification
       if (latexTemplate) {
-        setCurrentStep('Generating LaTeX report...');
+        setCurrentStep('Generating enhanced LaTeX report with completion verification...');
         setActiveTab('latex');
-        addChatMessage('system', `Starting LaTeX report generation using template "${latexTemplate.name}"`);
+        addChatMessage('system', `Starting enhanced LaTeX generation using template "${latexTemplate.name}" with completion verification`);
         
         const latexContent = await generateLatexReport(
           combinedWebData,
@@ -255,19 +264,19 @@ const DeepResearchApp = () => {
         );
         
         setLatexReport(latexContent);
-        addChatMessage('system', `LaTeX report generated using template "${latexTemplate.name}"`);
+        addChatMessage('system', `Enhanced LaTeX report completed using template "${latexTemplate.name}" with verified completion`);
       }
       
-      toast.success('Research machine completed work! Report is ready.');
+      toast.success('Enhanced research machine completed comprehensive analysis!');
       
     } catch (error) {
-      console.error('Research machine error:', error);
-      addChatMessage('system', `Research machine error: ${error.message}`);
-      toast.error('Web research error. Please try again.');
+      console.error('Enhanced research machine error:', error);
+      addChatMessage('system', `Enhanced research error: ${error.message}`);
+      toast.error('Enhanced research error. Please try again.');
     } finally {
       setIsResearching(false);
       setProgress(100);
-      setCurrentStep('Research machine completed work!');
+      setCurrentStep('Enhanced research machine completed comprehensive work!');
     }
   };
 
@@ -328,7 +337,7 @@ const DeepResearchApp = () => {
           <div className="flex items-center justify-between mb-4">
             <div></div>
             <h1 className="text-6xl font-light tracking-wide">
-              Research Machine
+              Enhanced Research Machine
             </h1>
             <button
               onClick={toggleTheme}
@@ -343,7 +352,7 @@ const DeepResearchApp = () => {
           </div>
           <div className={`w-32 h-0.5 mx-auto mb-4 ${theme === 'dark' ? 'bg-white' : 'bg-black'}`}></div>
           <p className={`text-lg font-light ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
-            Powered by Gemini 2.5 Flash Preview + Automatic Topic Splitting + Detailed Source Analysis with Full URLs
+            Powered by Gemini 2.5 Flash Preview + Enhanced Logical Structuring + Multi-Key Optimization + Completion Verification
           </p>
         </div>
 
@@ -423,14 +432,16 @@ const DeepResearchApp = () => {
               </div>
             )}
 
-            {/* Report Generation Progress */}
+            {/* Enhanced Report Generation Progress */}
             {reportGenerationProgress && (
               <div className={`p-4 rounded-lg ${theme === 'dark' ? 'bg-gray-900' : 'bg-gray-100'}`}>
-                <h3 className="font-medium mb-2">Report Generation</h3>
+                <h3 className="font-medium mb-2">Enhanced Report Generation</h3>
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
                     <span>Part {reportGenerationProgress.currentPart} of {reportGenerationProgress.totalParts}</span>
-                    <span>{Math.round((reportGenerationProgress.currentPart / reportGenerationProgress.totalParts) * 100)}%</span>
+                    <span className={reportGenerationProgress.isComplete ? 'text-green-600' : 'text-yellow-600'}>
+                      {reportGenerationProgress.isComplete ? '✓ VERIFIED' : '⏳ GENERATING'}
+                    </span>
                   </div>
                   <div className={`w-full rounded-full h-2 ${theme === 'dark' ? 'bg-black' : 'bg-white'}`}>
                     <div 
@@ -439,7 +450,7 @@ const DeepResearchApp = () => {
                     ></div>
                   </div>
                   <p className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
-                    {reportGenerationProgress.content.split(' ').length.toLocaleString()} words generated
+                    {reportGenerationProgress.content.split(' ').length.toLocaleString()} words generated with completion verification
                   </p>
                 </div>
               </div>

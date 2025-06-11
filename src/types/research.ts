@@ -1,4 +1,3 @@
-
 export interface ResearchResult {
   query: string;
   response: string;
@@ -29,6 +28,7 @@ export interface ResearchSettings {
   includeRecent: boolean;
   language: string;
   batchSize: number;
+  apiKeys: string[]; // Support for multiple API keys
 }
 
 export interface ChatMessage {
@@ -53,4 +53,18 @@ export interface LatexTemplate {
   name: string;
   content: string;
   uploadDate: Date;
+}
+
+export interface ReportGenerationConfig {
+  maxRetries: number;
+  completionKeyword: string;
+  timeoutMs: number;
+  verifyCompletion: boolean;
+}
+
+export interface PartGenerationResult {
+  content: string;
+  isComplete: boolean;
+  hasCompletionKey: boolean;
+  retryCount: number;
 }

@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -32,6 +31,8 @@ const ResearchSettings: React.FC<ResearchSettingsProps> = ({
 }) => {
   const [newUrl, setNewUrl] = React.useState('');
   const [bulkUrls, setBulkUrls] = React.useState('');
+  const [newApiKey, setNewApiKey] = React.useState('');
+  const [showApiKeyInput, setShowApiKeyInput] = React.useState(false);
 
   const addCustomUrl = () => {
     if (newUrl.trim() && !settings.customUrls.includes(newUrl.trim())) {
@@ -80,6 +81,27 @@ const ResearchSettings: React.FC<ResearchSettingsProps> = ({
     toast.success('All URLs removed');
   };
 
+  const addApiKey = () => {
+    if (newApiKey.trim() && !settings.apiKeys.includes(newApiKey.trim())) {
+      setSettings({
+        ...settings,
+        apiKeys: [...settings.apiKeys, newApiKey.trim()]
+      });
+      setNewApiKey('');
+      toast.success('API key added successfully');
+    }
+  };
+
+  const removeApiKey = (index: number) => {
+    setSettings({
+      ...settings,
+      apiKeys: settings.apiKeys.filter((_, i) => i !== index)
+    });
+    toast.success('API key removed');
+  };
+
+  const requiresAdditionalKeys = settings.batchSize >= 50;
+
   const themeClasses = theme === 'dark' 
     ? 'bg-gray-900 border-white text-white' 
     : 'bg-white border-black text-black';
@@ -93,23 +115,27 @@ const ResearchSettings: React.FC<ResearchSettingsProps> = ({
       <CardHeader>
         <CardTitle className="flex items-center gap-3 text-xl font-light">
           <Settings className="h-5 w-5" />
-          Research Settings
+          Enhanced Research Settings
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
+        {/* Topic input */}
         <div className="space-y-2">
           <Label htmlFor="topic" className="text-sm font-medium">Deep Research Topic</Label>
           <Textarea
             id="topic"
             value={topic}
             onChange={(e) => setTopic(e.target.value)}
-            placeholder="Enter topic for automatic splitting and deep analysis..."
+            placeholder="Enter topic for automatic logical splitting and comprehensive analysis..."
             rows={3}
             className={`transition-colors duration-200 ${theme === 'dark' ? 'border-white focus:border-gray-300' : 'border-black focus:border-gray-600'}`}
           />
-          <p className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>Gemini 2.5 Flash Preview will automatically split topic into subtopics</p>
+          <p className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
+            Gemini 2.5 Flash Preview will create enhanced logical structure with up to 1000 subtopics
+          </p>
         </div>
 
+        {/* Academic Level */}
         <div className="space-y-2">
           <Label className="text-sm font-medium">Academic Level</Label>
           <Select value={settings.tone} onValueChange={(value: any) => setSettings({...settings, tone: value})}>
@@ -124,6 +150,7 @@ const ResearchSettings: React.FC<ResearchSettingsProps> = ({
           </Select>
         </div>
 
+        {/* AI Model */}
         <div className="space-y-2">
           <Label className="text-sm font-medium">AI Model</Label>
           <Select value={settings.model} onValueChange={(value) => setSettings({...settings, model: value})}>
@@ -131,16 +158,17 @@ const ResearchSettings: React.FC<ResearchSettingsProps> = ({
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="gemini-2.5-flash-preview-05-20">Gemini 2.5 Flash Preview (web search)</SelectItem>
-              <SelectItem value="gemini-2.0-flash">Gemini 2.0 Flash (web search)</SelectItem>
-              <SelectItem value="gemini-2.0-flash-exp">Gemini 2.0 Flash Exp (web search)</SelectItem>
-              <SelectItem value="gemini-1.5-pro">Gemini 1.5 Pro (web search)</SelectItem>
+              <SelectItem value="gemini-2.5-flash-preview-05-20">Gemini 2.5 Flash Preview (Enhanced)</SelectItem>
+              <SelectItem value="gemini-2.0-flash">Gemini 2.0 Flash</SelectItem>
+              <SelectItem value="gemini-2.0-flash-exp">Gemini 2.0 Flash Exp</SelectItem>
+              <SelectItem value="gemini-1.5-pro">Gemini 1.5 Pro</SelectItem>
             </SelectContent>
           </Select>
         </div>
 
+        {/* Web Analysis Depth */}
         <div className="space-y-2">
-          <Label className="text-sm font-medium">Web Analysis Depth</Label>
+          <Label className="text-sm font-medium">Enhanced Analysis Depth</Label>
           <Select value={settings.searchDepth} onValueChange={(value: any) => setSettings({...settings, searchDepth: value})}>
             <SelectTrigger className={`${theme === 'dark' ? 'border-white focus:border-gray-300' : 'border-black focus:border-gray-600'}`}>
               <SelectValue />
@@ -148,30 +176,21 @@ const ResearchSettings: React.FC<ResearchSettingsProps> = ({
             <SelectContent>
               <SelectItem value="shallow">Shallow (Fast)</SelectItem>
               <SelectItem value="medium">Medium (Balanced)</SelectItem>
-              <SelectItem value="deep">Deep (Maximum)</SelectItem>
+              <SelectItem value="deep">Deep (Maximum with completion verification)</SelectItem>
             </SelectContent>
           </Select>
         </div>
 
-        <div className="flex items-center justify-between">
-          <div className="space-y-1">
-            <Label className="text-sm font-medium">Forced Web Search</Label>
-            <p className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>NO limits on web search and analysis!</p>
-          </div>
-          <Switch
-            checked={true}
-            disabled={true}
-            className="opacity-50"
-          />
-        </div>
-
+        {/* Report Word Count */}
         <div className="space-y-2">
           <Label className="text-sm font-medium">Words in Report: {settings.wordCount.toLocaleString()}</Label>
-          <p className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>Multi-part generation by 10,000 words per part</p>
+          <p className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
+            Enhanced multi-part generation with completion verification
+          </p>
           <input
             type="range"
             min="10000"
-            max="100000"
+            max="200000"
             step="5000"
             value={settings.wordCount}
             onChange={(e) => setSettings({...settings, wordCount: parseInt(e.target.value)})}
@@ -179,13 +198,16 @@ const ResearchSettings: React.FC<ResearchSettingsProps> = ({
           />
         </div>
 
+        {/* Enhanced Subtopics */}
         <div className="space-y-2">
-          <Label className="text-sm font-medium">Automatic Subtopics: {settings.parallelQueries}</Label>
-          <p className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>Gemini 2.5 Flash Preview will split topic into unique subtopics</p>
+          <Label className="text-sm font-medium">Enhanced Logical Subtopics: {settings.parallelQueries}</Label>
+          <p className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
+            Advanced logical structuring up to 1000 unique subtopics
+          </p>
           <input
             type="range"
             min="10"
-            max="500"
+            max="1000"
             step="10"
             value={settings.parallelQueries}
             onChange={(e) => setSettings({...settings, parallelQueries: parseInt(e.target.value)})}
@@ -193,18 +215,68 @@ const ResearchSettings: React.FC<ResearchSettingsProps> = ({
           />
         </div>
 
+        {/* Optimized Batch Size */}
         <div className="space-y-2">
-          <Label className="text-sm font-medium">Batch Size: {settings.batchSize}</Label>
+          <Label className="text-sm font-medium">Optimized Batch Size: {settings.batchSize}</Label>
+          <p className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
+            {requiresAdditionalKeys ? 'High volume mode - requires additional API keys' : 'Standard processing mode'}
+          </p>
           <input
             type="range"
             min="5"
-            max="50"
+            max="250"
             step="5"
             value={settings.batchSize}
             onChange={(e) => setSettings({...settings, batchSize: parseInt(e.target.value)})}
             className="w-full h-1 bg-muted rounded-lg appearance-none cursor-pointer slider"
           />
+          {requiresAdditionalKeys && (
+            <div className={`p-3 rounded border ${theme === 'dark' ? 'bg-yellow-900 border-yellow-700' : 'bg-yellow-100 border-yellow-500'}`}>
+              <p className="text-sm font-medium">⚠️ High Volume Mode</p>
+              <p className="text-xs">Batch size ≥50 requires 5 additional API keys for optimal performance</p>
+            </div>
+          )}
         </div>
+
+        {/* API Keys Management */}
+        {requiresAdditionalKeys && (
+          <div className="space-y-3">
+            <Label className="text-sm font-medium flex items-center gap-2">
+              🔑 Additional API Keys ({settings.apiKeys.length}/5 recommended)
+            </Label>
+            
+            <div className="flex gap-2">
+              <Input
+                type="password"
+                value={newApiKey}
+                onChange={(e) => setNewApiKey(e.target.value)}
+                placeholder="AIzaSy..."
+                className="flex-1"
+              />
+              <Button onClick={addApiKey} size="sm" variant="outline" className={buttonClasses}>
+                <Plus className="h-4 w-4" />
+              </Button>
+            </div>
+
+            {settings.apiKeys.length > 0 && (
+              <div className={`space-y-2 max-h-32 overflow-y-auto border rounded p-2 ${theme === 'dark' ? 'border-white' : 'border-black'}`}>
+                {settings.apiKeys.map((key, index) => (
+                  <div key={index} className={`flex items-center gap-2 text-xs p-1 rounded ${theme === 'dark' ? 'bg-gray-800' : 'bg-gray-100'}`}>
+                    <span className="flex-1">Key {index + 1}: ****{key.slice(-4)}</span>
+                    <Button
+                      onClick={() => removeApiKey(index)}
+                      size="sm"
+                      variant="ghost"
+                      className="h-5 w-5 p-0 hover:bg-destructive hover:text-destructive-foreground"
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Custom URLs Section */}
         <div className="space-y-3">
@@ -272,7 +344,7 @@ const ResearchSettings: React.FC<ResearchSettingsProps> = ({
 
         <Button 
           onClick={onStartResearch}
-          disabled={isResearching}
+          disabled={isResearching || (requiresAdditionalKeys && settings.apiKeys.length < 3)}
           className={`w-full py-3 text-lg font-light transition-all duration-300 hover:scale-105 ${
             theme === 'dark' 
               ? 'bg-white text-black hover:bg-gray-200' 
@@ -283,12 +355,16 @@ const ResearchSettings: React.FC<ResearchSettingsProps> = ({
           {isResearching ? (
             <>
               <Globe className="mr-2 h-5 w-5 animate-spin" />
-              Research Machine Working...
+              Enhanced Research Machine Working...
+            </>
+          ) : requiresAdditionalKeys && settings.apiKeys.length < 3 ? (
+            <>
+              🔑 Add API Keys for High Volume Mode
             </>
           ) : (
             <>
               <Globe className="mr-2 h-5 w-5" />
-              Start Research Machine
+              Start Enhanced Research Machine
             </>
           )}
         </Button>
