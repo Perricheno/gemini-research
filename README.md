@@ -1,73 +1,144 @@
-# Welcome to your Lovable project
 
-## Project info
+# 🧠 Enhanced Research Machine
 
-**URL**: https://lovable.dev/projects/329689f9-2fdf-40c4-8a2b-9265a230d7d1
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/yourusername/enhanced-research-machine)
 
-## How can I edit this code?
+![Research Machine](https://img.shields.io/badge/Research-Machine-purple)
+![Gemini](https://img.shields.io/badge/Powered%20by-Gemini%202.5%20Flash-blue)
+![React](https://img.shields.io/badge/React-18.3.1-61DAFB?logo=react)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.0-3178C6?logo=typescript)
+![Tailwind](https://img.shields.io/badge/Tailwind-CSS-38B2AC?logo=tailwind-css)
 
-There are several ways of editing your application.
+> **Advanced AI-powered research tool with enhanced logical structuring, multi-key optimization, and completion verification system**
 
-**Use Lovable**
+## ✨ Key Features
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/329689f9-2fdf-40c4-8a2b-9265a230d7d1) and start prompting.
+- 🔍 **Enhanced Logical Structuring** - Up to 1000 intelligent subtopics
+- ⚡ **Multi-Key Optimization** - Parallel processing with multiple API keys
+- ✅ **Completion Verification** - Unique system ensuring complete report generation
+- 📊 **Real-time Progress Tracking** - Live updates on research progress
+- 📝 **Multi-part Report Generation** - Comprehensive reports with verification
+- 📄 **LaTeX Export** - Academic-ready formatting with custom templates
+- 🌓 **Dark/Light Theme** - Comfortable viewing in any environment
+- 📱 **Responsive Design** - Works perfectly on all devices
 
-Changes made via Lovable will be committed automatically to this repo.
+## 🚀 One-Click Deployment
 
-**Use your preferred IDE**
+### Deploy to Render (Recommended)
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/yourusername/enhanced-research-machine)
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+**Manual Deployment (3 minutes):**
 
-Follow these steps:
+1. **Fork** this repository on GitHub
+2. **Create account** on [render.com](https://render.com)
+3. **Connect GitHub** to Render
+4. **Create Static Site** with settings:
+   ```
+   Build Command: npm run build
+   Publish Directory: dist
+   ```
+5. **Deploy!** Site will be ready in 3-5 minutes
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+📖 **Detailed guide:** [RENDER_DEPLOYMENT_GUIDE.md](./RENDER_DEPLOYMENT_GUIDE.md)
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+## 🛠️ Local Development
 
-# Step 3: Install the necessary dependencies.
-npm i
+### Prerequisites
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+- Node.js 18+ and npm
+- Gemini API key from [Google AI Studio](https://makersuite.google.com/app/apikey)
+
+### Installation
+
+```bash
+# Clone the repository
+git clone https://github.com/yourusername/enhanced-research-machine.git
+cd enhanced-research-machine
+
+# Install dependencies
+npm install
+
+# Start development server
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+Open [http://localhost:8080](http://localhost:8080) to view the application.
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+## 📋 Configuration
 
-**Use GitHub Codespaces**
+### API Keys Setup
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+1. Get your Gemini API key from [Google AI Studio](https://makersuite.google.com/app/apikey)
+2. Enter your API key in the application settings
+3. For high-volume research (250+ batch size), add 5 additional API keys
 
-## What technologies are used for this project?
+### Research Settings
 
-This project is built with:
+- **Topic**: Enter your research subject
+- **Tone**: Choose between PhD, Bachelor, or School level
+- **Word Count**: Set target length (up to 50,000 words)
+- **Parallel Queries**: Number of subtopics (up to 1000)
+- **Batch Size**: Processing batch size (up to 250)
+- **Search Depth**: Choose research depth level
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+## 🔧 Advanced Features
 
-## How can I deploy this project?
+### Enhanced Logical Structuring
+- Intelligent topic decomposition into up to 1000 subtopics
+- Logical flow and comprehensive coverage
+- Optimized for academic and professional research
 
-Simply open [Lovable](https://lovable.dev/projects/329689f9-2fdf-40c4-8a2b-9265a230d7d1) and click on Share -> Publish.
+### Multi-Key Optimization
+- Distributed API calls across multiple keys
+- Reduced rate limiting and faster processing
+- Automatic load balancing
 
-## Can I connect a custom domain to my Lovable project?
+### Completion Verification System
+- Unique completion markers for each report section
+- Automatic retry mechanism for incomplete sections
+- Ensures comprehensive report generation
 
-Yes, you can!
+### LaTeX Support
+- Upload custom LaTeX templates
+- Academic-ready formatting
+- Automatic reference integration
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+## 📊 Technical Stack
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+- **Frontend**: React 18.3.1, TypeScript, Tailwind CSS
+- **UI Components**: Shadcn/ui, Radix UI
+- **AI Integration**: Google Gemini 2.5 Flash Preview
+- **Icons**: Lucide React
+- **Build Tool**: Vite
+- **Deployment**: Render, Vercel, Netlify compatible
+
+## 🤝 Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+1. Fork the project
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🆘 Support
+
+- 📧 **Email**: support@yourproject.com
+- 💬 **Issues**: [GitHub Issues](https://github.com/yourusername/enhanced-research-machine/issues)
+- 📖 **Documentation**: [Wiki](https://github.com/yourusername/enhanced-research-machine/wiki)
+
+## 🙏 Acknowledgments
+
+- Google Gemini team for the powerful AI capabilities
+- Open source community for the amazing tools and libraries
+- All contributors who help improve this project
+
+---
+
+**Made with ❤️ for researchers worldwide**

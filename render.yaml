@@ -1,0 +1,9 @@
+
+services:
+  - type: web
+    name: enhanced-research-machine
+    env: static
+    buildCommand: npm install && npm run build
+    staticPublishPath: ./dist
+    domains:
+      - enhanced-research-machine.onrender.com

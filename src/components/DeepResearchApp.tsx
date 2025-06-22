@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Search, Brain, FileText, Download, MessageSquare, Upload, Sun, Moon } from 'lucide-react';
 import { toast } from 'sonner';
@@ -8,6 +9,7 @@ import ResearchProgress from './ResearchProgress';
 import ResearchChat from './ResearchChat';
 import ResearchResults from './ResearchResults';
 import ResearchReport from './ResearchReport';
+import DeployButton from './DeployButton';
 
 const DeepResearchApp = () => {
   const [topic, setTopic] = useState('');
@@ -335,7 +337,7 @@ const DeepResearchApp = () => {
       <div className="container mx-auto p-6 max-w-7xl">
         <div className="text-center mb-8 animate-fade-in">
           <div className="flex items-center justify-between mb-4">
-            <div></div>
+            <DeployButton />
             <h1 className="text-6xl font-light tracking-wide">
               Enhanced Research Machine
             </h1>
