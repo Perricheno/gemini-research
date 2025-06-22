@@ -1,4 +1,3 @@
-
 # 🧠 Enhanced Research Machine
 
 [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/yourusername/enhanced-research-machine)
@@ -26,7 +25,7 @@
 
 ### Deploy to Render (Recommended)
 
-[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/yourusername/enhanced-research-machine)
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/perricheno/gemini-research)
 
 **Manual Deployment (3 minutes):**
 
@@ -39,8 +38,6 @@
    Publish Directory: dist
    ```
 5. **Deploy!** Site will be ready in 3-5 minutes
-
-📖 **Detailed guide:** [RENDER_DEPLOYMENT_GUIDE.md](./RENDER_DEPLOYMENT_GUIDE.md)
 
 ## 🛠️ Local Development
 
@@ -71,13 +68,13 @@ Open [http://localhost:8080](http://localhost:8080) to view the application.
 
 1. Get your Gemini API key from [Google AI Studio](https://makersuite.google.com/app/apikey)
 2. Enter your API key in the application settings
-3. For high-volume research (250+ batch size), add 5 additional API keys
+3. For high-volume research (50+ batch size), add 5 additional API keys
 
 ### Research Settings
 
 - **Topic**: Enter your research subject
 - **Tone**: Choose between PhD, Bachelor, or School level
-- **Word Count**: Set target length (up to 50,000 words)
+- **Word Count**: Set target length (up to 200,000words)
 - **Parallel Queries**: Number of subtopics (up to 1000)
 - **Batch Size**: Processing batch size (up to 250)
 - **Search Depth**: Choose research depth level
@@ -85,21 +82,25 @@ Open [http://localhost:8080](http://localhost:8080) to view the application.
 ## 🔧 Advanced Features
 
 ### Enhanced Logical Structuring
+
 - Intelligent topic decomposition into up to 1000 subtopics
 - Logical flow and comprehensive coverage
 - Optimized for academic and professional research
 
 ### Multi-Key Optimization
+
 - Distributed API calls across multiple keys
 - Reduced rate limiting and faster processing
 - Automatic load balancing
 
 ### Completion Verification System
+
 - Unique completion markers for each report section
 - Automatic retry mechanism for incomplete sections
 - Ensures comprehensive report generation
 
 ### LaTeX Support
+
 - Upload custom LaTeX templates
 - Academic-ready formatting
 - Automatic reference integration
@@ -113,25 +114,7 @@ Open [http://localhost:8080](http://localhost:8080) to view the application.
 - **Build Tool**: Vite
 - **Deployment**: Render, Vercel, Netlify compatible
 
-## 🤝 Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-1. Fork the project
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
-## 📄 License
-
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🆘 Support
-
-- 📧 **Email**: support@yourproject.com
-- 💬 **Issues**: [GitHub Issues](https://github.com/yourusername/enhanced-research-machine/issues)
-- 📖 **Documentation**: [Wiki](https://github.com/yourusername/enhanced-research-machine/wiki)
 
 ## 🙏 Acknowledgments
 
