@@ -1,7 +1,5 @@
 # 🧠 Enhanced Research Machine
 
-[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/yourusername/enhanced-research-machine)
-
 ![Research Machine](https://img.shields.io/badge/Research-Machine-purple)
 ![Gemini](https://img.shields.io/badge/Powered%20by-Gemini%202.5%20Flash-blue)
 ![React](https://img.shields.io/badge/React-18.3.1-61DAFB?logo=react)
