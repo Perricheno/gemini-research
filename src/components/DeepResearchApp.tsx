@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Search, Brain, FileText, Download, MessageSquare, Upload, Sun, Moon } from 'lucide-react';
 import { toast } from 'sonner';
@@ -9,7 +8,6 @@ import ResearchProgress from './ResearchProgress';
 import ResearchChat from './ResearchChat';
 import ResearchResults from './ResearchResults';
 import ResearchReport from './ResearchReport';
-import DeployButton from './DeployButton';
 
 const DeepResearchApp = () => {
   const [topic, setTopic] = useState('');
@@ -337,7 +335,7 @@ const DeepResearchApp = () => {
       <div className="container mx-auto p-6 max-w-7xl">
         <div className="text-center mb-8 animate-fade-in">
           <div className="flex items-center justify-between mb-4">
-            <DeployButton />
+            <div className="w-8"></div>
             <h1 className="text-6xl font-light tracking-wide">
               Enhanced Research Machine
             </h1>
@@ -383,7 +381,7 @@ const DeepResearchApp = () => {
             />
 
             {/* LaTeX Template Upload */}
-            <div className={`p-4 rounded-lg ${theme === 'dark' ? 'bg-gray-900' : 'bg-gray-100'}`}>
+            <div className={`p-4 rounded-lg ${theme === 'dark' ? 'bg-gray-900 border border-gray-800' : 'bg-gray-100 border border-gray-200'}`}>
               <h3 className="font-medium mb-2 flex items-center gap-2">
                 <FileText className="h-4 w-4" />
                 LaTeX Template
@@ -415,7 +413,7 @@ const DeepResearchApp = () => {
 
             {/* Download Web Data Button */}
             {webDataForDownload && (
-              <div className={`p-4 rounded-lg ${theme === 'dark' ? 'bg-gray-900' : 'bg-gray-100'}`}>
+              <div className={`p-4 rounded-lg ${theme === 'dark' ? 'bg-gray-900 border border-gray-800' : 'bg-gray-100 border border-gray-200'}`}>
                 <h3 className="font-medium mb-2">Web Data Ready</h3>
                 <button
                   onClick={downloadWebData}
@@ -436,7 +434,7 @@ const DeepResearchApp = () => {
 
             {/* Enhanced Report Generation Progress */}
             {reportGenerationProgress && (
-              <div className={`p-4 rounded-lg ${theme === 'dark' ? 'bg-gray-900' : 'bg-gray-100'}`}>
+              <div className={`p-4 rounded-lg ${theme === 'dark' ? 'bg-gray-900 border border-gray-800' : 'bg-gray-100 border border-gray-200'}`}>
                 <h3 className="font-medium mb-2">Enhanced Report Generation</h3>
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
@@ -445,7 +443,7 @@ const DeepResearchApp = () => {
                       {reportGenerationProgress.isComplete ? '✓ VERIFIED' : '⏳ GENERATING'}
                     </span>
                   </div>
-                  <div className={`w-full rounded-full h-2 ${theme === 'dark' ? 'bg-black' : 'bg-white'}`}>
+                  <div className={`w-full rounded-full h-2 ${theme === 'dark' ? 'bg-gray-800' : 'bg-gray-300'}`}>
                     <div 
                       className={`h-2 rounded-full transition-all duration-300 ${theme === 'dark' ? 'bg-white' : 'bg-black'}`}
                       style={{ width: `${(reportGenerationProgress.currentPart / reportGenerationProgress.totalParts) * 100}%` }}
@@ -462,7 +460,7 @@ const DeepResearchApp = () => {
           {/* Main Content */}
           <div className="lg:col-span-3 space-y-6">
             {/* Tab Navigation */}
-            <div className={`flex space-x-1 p-1 rounded-lg ${theme === 'dark' ? 'bg-gray-900' : 'bg-gray-100'}`}>
+            <div className={`flex space-x-1 p-1 rounded-lg ${theme === 'dark' ? 'bg-gray-900 border border-gray-800' : 'bg-gray-100 border border-gray-200'}`}>
               <button
                 onClick={() => setActiveTab('chat')}
                 className={`flex-1 py-2 px-4 rounded-md transition-all duration-200 font-light ${
@@ -560,7 +558,7 @@ const DeepResearchApp = () => {
                   </p>
                 </div>
                 {reportGenerationProgress.content && (
-                  <div className={`p-4 rounded-lg ${theme === 'dark' ? 'bg-gray-900' : 'bg-gray-100'}`}>
+                  <div className={`p-4 rounded-lg ${theme === 'dark' ? 'bg-gray-900 border border-gray-800' : 'bg-gray-100 border border-gray-200'}`}>
                     <h3 className="font-medium mb-2">Preview of part {reportGenerationProgress.currentPart}</h3>
                     <div className="max-h-64 overflow-y-auto">
                       <pre className="whitespace-pre-wrap text-sm font-light leading-relaxed">

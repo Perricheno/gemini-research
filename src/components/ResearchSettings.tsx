@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -6,7 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { Settings, Plus, Upload, Trash2, Link, Globe } from 'lucide-react';
+import { Settings, Plus, Upload, Trash2, Link, Globe, Play } from 'lucide-react';
 import { toast } from 'sonner';
 import { ResearchSettings as ResearchSettingsType } from '../types/research';
 
@@ -103,12 +104,16 @@ const ResearchSettings: React.FC<ResearchSettingsProps> = ({
   const requiresAdditionalKeys = settings.batchSize >= 50;
 
   const themeClasses = theme === 'dark' 
-    ? 'bg-gray-900 border-white text-white' 
-    : 'bg-white border-black text-black';
+    ? 'bg-gray-900 border-gray-800 text-white' 
+    : 'bg-white border-gray-200 text-black';
 
   const buttonClasses = theme === 'dark'
-    ? 'border-white hover:bg-white hover:text-black'
-    : 'border-black hover:bg-black hover:text-white';
+    ? 'border-gray-600 hover:bg-white hover:text-black'
+    : 'border-gray-300 hover:bg-black hover:text-white';
+
+  const inputClasses = theme === 'dark'
+    ? 'border-gray-600 bg-gray-800 text-white focus:border-gray-400'
+    : 'border-gray-300 bg-white text-black focus:border-gray-600';
 
   return (
     <Card className={`border-2 hover:shadow-2xl transition-all duration-500 animate-scale-in ${themeClasses}`}>
@@ -128,7 +133,7 @@ const ResearchSettings: React.FC<ResearchSettingsProps> = ({
             onChange={(e) => setTopic(e.target.value)}
             placeholder="Enter topic for automatic logical splitting and comprehensive analysis..."
             rows={3}
-            className={`transition-colors duration-200 ${theme === 'dark' ? 'border-white focus:border-gray-300' : 'border-black focus:border-gray-600'}`}
+            className={`transition-colors duration-200 ${inputClasses}`}
           />
           <p className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
             Gemini 2.5 Flash Preview will create enhanced logical structure with up to 1000 subtopics
@@ -139,10 +144,10 @@ const ResearchSettings: React.FC<ResearchSettingsProps> = ({
         <div className="space-y-2">
           <Label className="text-sm font-medium">Academic Level</Label>
           <Select value={settings.tone} onValueChange={(value: any) => setSettings({...settings, tone: value})}>
-            <SelectTrigger className={`${theme === 'dark' ? 'border-white focus:border-gray-300' : 'border-black focus:border-gray-600'}`}>
+            <SelectTrigger className={inputClasses}>
               <SelectValue />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className={theme === 'dark' ? 'bg-gray-800 border-gray-600' : 'bg-white border-gray-200'}>
               <SelectItem value="phd">PhD Level (Advanced)</SelectItem>
               <SelectItem value="bachelor">Bachelor Level (Academic)</SelectItem>
               <SelectItem value="school">School Level (Simple)</SelectItem>
@@ -154,10 +159,10 @@ const ResearchSettings: React.FC<ResearchSettingsProps> = ({
         <div className="space-y-2">
           <Label className="text-sm font-medium">AI Model</Label>
           <Select value={settings.model} onValueChange={(value) => setSettings({...settings, model: value})}>
-            <SelectTrigger className={`${theme === 'dark' ? 'border-white focus:border-gray-300' : 'border-black focus:border-gray-600'}`}>
+            <SelectTrigger className={inputClasses}>
               <SelectValue />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className={theme === 'dark' ? 'bg-gray-800 border-gray-600' : 'bg-white border-gray-200'}>
               <SelectItem value="gemini-2.5-flash-preview-05-20">Gemini 2.5 Flash Preview (Enhanced)</SelectItem>
               <SelectItem value="gemini-2.0-flash">Gemini 2.0 Flash</SelectItem>
               <SelectItem value="gemini-2.0-flash-exp">Gemini 2.0 Flash Exp</SelectItem>
@@ -170,10 +175,10 @@ const ResearchSettings: React.FC<ResearchSettingsProps> = ({
         <div className="space-y-2">
           <Label className="text-sm font-medium">Enhanced Analysis Depth</Label>
           <Select value={settings.searchDepth} onValueChange={(value: any) => setSettings({...settings, searchDepth: value})}>
-            <SelectTrigger className={`${theme === 'dark' ? 'border-white focus:border-gray-300' : 'border-black focus:border-gray-600'}`}>
+            <SelectTrigger className={inputClasses}>
               <SelectValue />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className={theme === 'dark' ? 'bg-gray-800 border-gray-600' : 'bg-white border-gray-200'}>
               <SelectItem value="shallow">Shallow (Fast)</SelectItem>
               <SelectItem value="medium">Medium (Balanced)</SelectItem>
               <SelectItem value="deep">Deep (Maximum with completion verification)</SelectItem>
@@ -194,7 +199,9 @@ const ResearchSettings: React.FC<ResearchSettingsProps> = ({
             step="5000"
             value={settings.wordCount}
             onChange={(e) => setSettings({...settings, wordCount: parseInt(e.target.value)})}
-            className="w-full h-1 bg-muted rounded-lg appearance-none cursor-pointer slider"
+            className={`w-full h-1 rounded-lg appearance-none cursor-pointer ${
+              theme === 'dark' ? 'bg-gray-700' : 'bg-gray-300'
+            }`}
           />
         </div>
 
@@ -211,7 +218,9 @@ const ResearchSettings: React.FC<ResearchSettingsProps> = ({
             step="10"
             value={settings.parallelQueries}
             onChange={(e) => setSettings({...settings, parallelQueries: parseInt(e.target.value)})}
-            className="w-full h-1 bg-muted rounded-lg appearance-none cursor-pointer slider"
+            className={`w-full h-1 rounded-lg appearance-none cursor-pointer ${
+              theme === 'dark' ? 'bg-gray-700' : 'bg-gray-300'
+            }`}
           />
         </div>
 
@@ -228,10 +237,12 @@ const ResearchSettings: React.FC<ResearchSettingsProps> = ({
             step="5"
             value={settings.batchSize}
             onChange={(e) => setSettings({...settings, batchSize: parseInt(e.target.value)})}
-            className="w-full h-1 bg-muted rounded-lg appearance-none cursor-pointer slider"
+            className={`w-full h-1 rounded-lg appearance-none cursor-pointer ${
+              theme === 'dark' ? 'bg-gray-700' : 'bg-gray-300'
+            }`}
           />
           {requiresAdditionalKeys && (
-            <div className={`p-3 rounded border ${theme === 'dark' ? 'bg-yellow-900 border-yellow-700' : 'bg-yellow-100 border-yellow-500'}`}>
+            <div className={`p-3 rounded border ${theme === 'dark' ? 'bg-gray-800 border-gray-600 text-yellow-400' : 'bg-yellow-100 border-yellow-500 text-yellow-800'}`}>
               <p className="text-sm font-medium">⚠️ High Volume Mode</p>
               <p className="text-xs">Batch size ≥50 requires 5 additional API keys for optimal performance</p>
             </div>
@@ -251,7 +262,7 @@ const ResearchSettings: React.FC<ResearchSettingsProps> = ({
                 value={newApiKey}
                 onChange={(e) => setNewApiKey(e.target.value)}
                 placeholder="AIzaSy..."
-                className="flex-1"
+                className={`flex-1 ${inputClasses}`}
               />
               <Button onClick={addApiKey} size="sm" variant="outline" className={buttonClasses}>
                 <Plus className="h-4 w-4" />
@@ -259,9 +270,9 @@ const ResearchSettings: React.FC<ResearchSettingsProps> = ({
             </div>
 
             {settings.apiKeys.length > 0 && (
-              <div className={`space-y-2 max-h-32 overflow-y-auto border rounded p-2 ${theme === 'dark' ? 'border-white' : 'border-black'}`}>
+              <div className={`space-y-2 max-h-32 overflow-y-auto border rounded p-2 ${theme === 'dark' ? 'border-gray-600 bg-gray-800' : 'border-gray-300 bg-gray-50'}`}>
                 {settings.apiKeys.map((key, index) => (
-                  <div key={index} className={`flex items-center gap-2 text-xs p-1 rounded ${theme === 'dark' ? 'bg-gray-800' : 'bg-gray-100'}`}>
+                  <div key={index} className={`flex items-center gap-2 text-xs p-1 rounded ${theme === 'dark' ? 'bg-gray-700' : 'bg-white'}`}>
                     <span className="flex-1">Key {index + 1}: ****{key.slice(-4)}</span>
                     <Button
                       onClick={() => removeApiKey(index)}
@@ -291,7 +302,7 @@ const ResearchSettings: React.FC<ResearchSettingsProps> = ({
               value={newUrl}
               onChange={(e) => setNewUrl(e.target.value)}
               placeholder="https://example.com"
-              className="flex-1"
+              className={`flex-1 ${inputClasses}`}
             />
             <Button onClick={addCustomUrl} size="sm" variant="outline" className={buttonClasses}>
               <Plus className="h-4 w-4" />
@@ -306,7 +317,7 @@ const ResearchSettings: React.FC<ResearchSettingsProps> = ({
               onChange={(e) => setBulkUrls(e.target.value)}
               placeholder="Paste multiple URLs to include in web search"
               rows={3}
-              className="text-xs"
+              className={`text-xs ${inputClasses}`}
             />
             <div className="flex gap-2">
               <Button onClick={addBulkUrls} size="sm" variant="outline" className={`flex-1 ${buttonClasses}`}>
@@ -323,9 +334,9 @@ const ResearchSettings: React.FC<ResearchSettingsProps> = ({
 
           {/* URL list */}
           {settings.customUrls.length > 0 && (
-            <div className={`space-y-2 max-h-32 overflow-y-auto border rounded p-2 ${theme === 'dark' ? 'border-white' : 'border-black'}`}>
+            <div className={`space-y-2 max-h-32 overflow-y-auto border rounded p-2 ${theme === 'dark' ? 'border-gray-600 bg-gray-800' : 'border-gray-300 bg-gray-50'}`}>
               {settings.customUrls.map((url, index) => (
-                <div key={index} className={`flex items-center gap-2 text-xs p-1 rounded ${theme === 'dark' ? 'bg-gray-800' : 'bg-gray-100'}`}>
+                <div key={index} className={`flex items-center gap-2 text-xs p-1 rounded ${theme === 'dark' ? 'bg-gray-700' : 'bg-white'}`}>
                   <Link className={`h-3 w-3 flex-shrink-0 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`} />
                   <span className="flex-1 truncate" title={url}>{url}</span>
                   <Button
@@ -344,7 +355,7 @@ const ResearchSettings: React.FC<ResearchSettingsProps> = ({
 
         <Button 
           onClick={onStartResearch}
-          disabled={isResearching || (requiresAdditionalKeys && settings.apiKeys.length < 3)}
+          disabled={isResearching || !topic.trim()}
           className={`w-full py-3 text-lg font-light transition-all duration-300 hover:scale-105 ${
             theme === 'dark' 
               ? 'bg-white text-black hover:bg-gray-200' 
@@ -355,16 +366,12 @@ const ResearchSettings: React.FC<ResearchSettingsProps> = ({
           {isResearching ? (
             <>
               <Globe className="mr-2 h-5 w-5 animate-spin" />
-              Enhanced Research Machine Working...
-            </>
-          ) : requiresAdditionalKeys && settings.apiKeys.length < 3 ? (
-            <>
-              🔑 Add API Keys for High Volume Mode
+              Research Machine Working...
             </>
           ) : (
             <>
-              <Globe className="mr-2 h-5 w-5" />
-              Start Enhanced Research Machine
+              <Play className="mr-2 h-5 w-5" />
+              Start
             </>
           )}
         </Button>

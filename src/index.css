@@ -126,35 +126,70 @@
 }
 
 /* Custom slider styles */
-.slider::-webkit-slider-thumb {
+input[type="range"] {
+  appearance: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+input[type="range"]::-webkit-slider-track {
+  background: currentColor;
+  height: 4px;
+  border-radius: 2px;
+  opacity: 0.3;
+}
+
+input[type="range"]::-webkit-slider-thumb {
   appearance: none;
   height: 16px;
   width: 16px;
   border-radius: 50%;
-  background: #000;
+  background: currentColor;
   cursor: pointer;
   transition: all 0.2s ease;
+  margin-top: -6px;
 }
 
-.slider::-webkit-slider-thumb:hover {
+input[type="range"]::-webkit-slider-thumb:hover {
   transform: scale(1.2);
 }
 
-.slider::-moz-range-thumb {
+input[type="range"]::-moz-range-track {
+  background: currentColor;
+  height: 4px;
+  border-radius: 2px;
+  opacity: 0.3;
+  border: none;
+}
+
+input[type="range"]::-moz-range-thumb {
   height: 16px;
   width: 16px;
   border-radius: 50%;
-  background: #000;
+  background: currentColor;
   cursor: pointer;
   border: none;
   transition: all 0.2s ease;
 }
 
-.slider::-moz-range-thumb:hover {
+input[type="range"]::-moz-range-thumb:hover {
   transform: scale(1.2);
 }
 
 /* Progress bar styling */
 .progress-bar {
   background: linear-gradient(90deg, #000 0%, #666 100%);
+}
+
+/* Hide the "Edit with Lovable" badge */
+div[style*="position: fixed"][style*="bottom"][style*="right"] {
+  display: none !important;
+}
+
+/* Additional hide for any Lovable badges */
+[data-lovable], 
+.lovable-badge,
+div:has-text("Edit with"),
+div:has-text("Lovable") {
+  display: none !important;
 }
